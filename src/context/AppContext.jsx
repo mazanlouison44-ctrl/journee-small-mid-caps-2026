@@ -8,7 +8,8 @@ const STORAGE_KEYS = {
   COMPANIES: 'jsmc_companies_v1',
   PROGRAM: 'jsmc_program_v1',
   EVENT_INFO: 'jsmc_event_info_v1',
-  REGISTRATIONS: 'jsmc_registrations_v1'
+  REGISTRATIONS: 'jsmc_registrations_v1',
+  ADMIN_AUTH: 'jsmc_admin_auth_v1'
 };
 
 const INITIAL_DEMO_REGISTRATIONS = [
@@ -54,7 +55,8 @@ export const AppProvider = ({ children }) => {
 
   const [eventInfo, setEventInfo] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.EVENT_INFO);
-    return saved ? JSON.parse(saved) : INITIAL_EVENT_INFO;
+    const defaults = { ...INITIAL_EVENT_INFO, adminPassword: 'EuroLand2026' };
+    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
   });
 
   const [registrations, setRegistrations] = useState(() => {
@@ -62,13 +64,18 @@ export const AppProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_DEMO_REGISTRATIONS;
   });
 
-  // UI state
+  // UI & Password Security state
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
   const [selectedCompanyIds, setSelectedCompanyIds] = useState([]);
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const [lastSubmittedRegistration, setLastSubmittedRegistration] = useState(null);
+  
   const [adminMode, setAdminMode] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(() => {
+    return sessionStorage.getItem(STORAGE_KEYS.ADMIN_AUTH) === 'true';
+  });
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
 
   // Sync to LocalStorage
   useEffect(() => {
@@ -86,6 +93,34 @@ export const AppProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEYS.REGISTRATIONS, JSON.stringify(registrations));
   }, [registrations]);
+
+  // Admin Security Helper
+  const openAdminProtected = () => {
+    if (adminAuthenticated) {
+      setAdminMode(true);
+    } else {
+      setPasswordModalOpen(true);
+    }
+  };
+
+  const loginAdmin = (enteredPassword) => {
+    const currentPass = eventInfo.adminPassword || 'EuroLand2026';
+    if (enteredPassword === currentPass) {
+      setAdminAuthenticated(true);
+      sessionStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
+      setPasswordModalOpen(false);
+      setAdminMode(true);
+      return true;
+    } else {
+      return false;
+    }
+  };
+
+  const logoutAdmin = () => {
+    setAdminAuthenticated(false);
+    setAdminMode(false);
+    sessionStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
+  };
 
   // Company selection helper
   const toggleSelectCompany = (id) => {
@@ -120,7 +155,6 @@ export const AppProvider = ({ children }) => {
     setConfirmationModalOpen(true);
     setSelectedCompanyIds([]);
 
-    // Real-time sending to Google Sheets / Webhook URL if configured
     if (eventInfo.webhookUrl && eventInfo.webhookUrl.trim() !== '') {
       try {
         fetch(eventInfo.webhookUrl, {
@@ -194,6 +228,12 @@ export const AppProvider = ({ children }) => {
         submitRegistration,
         adminMode,
         setAdminMode,
+        adminAuthenticated,
+        openAdminProtected,
+        loginAdmin,
+        logoutAdmin,
+        passwordModalOpen,
+        setPasswordModalOpen,
         toggleCompanyActive,
         updateCompany,
         addCompany,

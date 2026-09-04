@@ -8,6 +8,7 @@ import { ProgramSection } from './components/ProgramSection';
 import { PracticalInfoSection } from './components/PracticalInfoSection';
 import { RegistrationWizard } from './components/RegistrationWizard';
 import { ConfirmationModal } from './components/ConfirmationModal';
+import { AdminPasswordModal } from './components/AdminPasswordModal';
 import { AdminDashboard } from './components/AdminDashboard';
 import { MobileStickyBar } from './components/MobileStickyBar';
 import { Footer } from './components/Footer';
@@ -32,6 +33,7 @@ function AppContent() {
       {/* Modals & Overlay Workflows */}
       <RegistrationWizard />
       <ConfirmationModal />
+      <AdminPasswordModal />
     </div>
   );
 }

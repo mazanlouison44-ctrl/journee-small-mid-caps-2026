@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
-import { Building2, Calendar, Menu, X, Shield, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Building2, Calendar, Menu, X, Shield, ArrowRight, Lock } from 'lucide-react';
 
 export const Navbar = () => {
-  const { openWizard, selectedCompanyIds, adminMode, setAdminMode, eventInfo } = useApp();
+  const { openWizard, selectedCompanyIds, adminMode, setAdminMode, openAdminProtected, adminAuthenticated, logoutAdmin } = useApp();
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -60,19 +60,26 @@ export const Navbar = () => {
 
         {/* Action Buttons */}
         <div className="hidden sm:flex items-center space-x-4">
-          {/* Admin Mode Switch */}
-          <button
-            onClick={() => setAdminMode(!adminMode)}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 transition-all border ${
-              adminMode
-                ? 'bg-blue-900 text-white border-blue-900 shadow-sm'
-                : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200'
-            }`}
-            title="Accès Administrateur EuroLand Corporate"
-          >
-            <Shield className="w-3.5 h-3.5" />
-            <span>{adminMode ? 'Quitter Admin' : 'Admin'}</span>
-          </button>
+          {/* Admin Mode Switch with Password Lock */}
+          {adminMode ? (
+            <button
+              onClick={logoutAdmin}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 bg-blue-900 text-white border border-blue-900 shadow-sm"
+              title="Déconnexion Administrateur"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Quitter Admin</span>
+            </button>
+          ) : (
+            <button
+              onClick={openAdminProtected}
+              className="px-3 py-1.5 rounded-md text-xs font-semibold flex items-center space-x-1.5 bg-slate-100 text-slate-700 border border-slate-200 hover:bg-slate-200"
+              title="Accès Administrateur EuroLand Corporate (Protégé par mot de passe)"
+            >
+              <Lock className="w-3.5 h-3.5 text-blue-900" />
+              <span>Accès Admin</span>
+            </button>
+          )}
 
           {/* Primary CTA */}
           <button
@@ -93,11 +100,11 @@ export const Navbar = () => {
         {/* Mobile Menu Toggle */}
         <div className="flex sm:hidden items-center space-x-2">
           <button
-            onClick={() => setAdminMode(!adminMode)}
+            onClick={openAdminProtected}
             className="p-2 text-slate-700 hover:bg-slate-100 rounded-md"
             aria-label="Admin"
           >
-            <Shield className="w-5 h-5 text-blue-900" />
+            <Lock className="w-5 h-5 text-blue-900" />
           </button>
           
           <button

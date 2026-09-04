@@ -1,9 +1,9 @@
 import React from 'react';
-import { Building2, Mail, Phone, MapPin, ShieldCheck } from 'lucide-react';
+import { Building2, Mail, Phone, MapPin, ShieldCheck, Lock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const Footer = () => {
-  const { eventInfo, setAdminMode, adminMode } = useApp();
+  const { eventInfo, openAdminProtected, adminMode, logoutAdmin } = useApp();
 
   return (
     <footer className="bg-slate-900 text-slate-300 pt-16 pb-24 sm:pb-16 border-t border-slate-800">
@@ -78,12 +78,23 @@ export const Footer = () => {
             <span>•</span>
             <a href="#mentions" className="hover:text-slate-300 transition-colors">Mentions Légales</a>
             <span>•</span>
-            <button
-              onClick={() => setAdminMode(!adminMode)}
-              className="text-blue-400 hover:text-white font-semibold underline"
-            >
-              {adminMode ? 'Quitter Admin' : 'Accès EuroLand Admin'}
-            </button>
+            {adminMode ? (
+              <button
+                onClick={logoutAdmin}
+                className="text-blue-400 hover:text-white font-semibold underline flex items-center gap-1"
+              >
+                <Lock className="w-3 h-3" />
+                <span>Quitter Espace Admin</span>
+              </button>
+            ) : (
+              <button
+                onClick={openAdminProtected}
+                className="text-slate-400 hover:text-white font-semibold underline flex items-center gap-1"
+              >
+                <Lock className="w-3 h-3 text-blue-400" />
+                <span>Accès EuroLand Admin</span>
+              </button>
+            )}
           </div>
         </div>
 
