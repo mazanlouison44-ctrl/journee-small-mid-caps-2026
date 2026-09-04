@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { TIME_SLOTS } from '../data/companies';
+import { CompanyLogo } from './CompaniesSection';
 import {
   X, Check, ArrowRight, ArrowLeft, AlertCircle, Building2, User, Clock,
   Calendar, CheckCircle2, Search, Sliders, ShieldCheck, Sparkles, AlertTriangle,
@@ -674,14 +675,12 @@ export const RegistrationWizard = () => {
                         }`}
                       >
                         <div className="flex items-center space-x-3 min-w-0">
-                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xs font-extrabold shrink-0 ${
-                            isSelected ? 'bg-blue-900 text-white' : 'bg-slate-100 text-slate-700'
-                          }`}>
-                            {company.name.slice(0, 2).toUpperCase()}
-                          </div>
+                          <CompanyLogo company={company} isSelected={isSelected} size="sm" />
                           <div className="truncate">
                             <h4 className="text-sm font-bold truncate text-slate-900">{company.name}</h4>
-                            <span className="text-[11px] text-slate-500 font-normal">{company.sector}</span>
+                            {company.ticker && (
+                              <span className="text-[10px] text-slate-500 font-mono block">{company.ticker}</span>
+                            )}
                           </div>
                         </div>
 

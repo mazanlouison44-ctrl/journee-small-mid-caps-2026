@@ -5,8 +5,8 @@ import { MapPin, Calendar, Clock, Navigation, Car, Bike, Train, ExternalLink } f
 export const PracticalInfoSection = () => {
   const { eventInfo } = useApp();
 
-  // Google Maps embed URL for 9 Avenue Hoche, 75008 Paris
-  const mapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(eventInfo.address)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
+  // Google Maps embed URL for Hôtel France Amériques, 9-11 Avenue Franklin D. Roosevelt, 75008 Paris
+  const mapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(eventInfo.locationName + ' ' + eventInfo.address)}&t=&z=16&ie=UTF8&iwloc=&output=embed`;
 
   return (
     <section id="infos" className="py-20 bg-white border-b border-slate-200">

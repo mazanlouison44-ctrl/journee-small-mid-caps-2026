@@ -25,7 +25,7 @@ export const Hero = () => {
               <Calendar className="w-4 h-4 text-blue-700" />
               <span className="font-semibold">{eventInfo.dateFormatted}</span>
               <span className="text-blue-300">•</span>
-              <span className="text-slate-600">Paris</span>
+              <span className="text-slate-600 font-semibold">{eventInfo.locationName} (Paris 8<sup>e</sup>)</span>
             </div>
 
             {/* Main Headline */}

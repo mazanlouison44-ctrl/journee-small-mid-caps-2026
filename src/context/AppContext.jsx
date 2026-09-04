@@ -56,7 +56,7 @@ export const AppProvider = ({ children }) => {
   const [eventInfo, setEventInfo] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.EVENT_INFO);
     const parsed = saved ? JSON.parse(saved) : {};
-    return { ...INITIAL_EVENT_INFO, ...parsed, adminPassword: 'EuroL@nd2026!' };
+    return { ...parsed, ...INITIAL_EVENT_INFO, adminPassword: 'EuroL@nd2026!' };
   });
 
   const [registrations, setRegistrations] = useState(() => {

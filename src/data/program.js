@@ -41,11 +41,11 @@ export const INITIAL_EVENT_INFO = {
   organizer: 'EuroLand Corporate',
   dateFormatted: 'Mercredi 4 novembre 2026',
   dateISO: '2026-11-04',
-  locationName: 'Salons Hoche / Centre de Conférence EuroLand',
-  address: '9 Avenue Hoche, 75008 Paris',
-  metroAccess: 'Station Charles de Gaulle - Étoile (Lignes 1, 2, 6) ou Courcelles (Ligne 2)',
-  rerAccess: 'RER A - Station Charles de Gaulle - Étoile',
-  parkingAccess: 'Parking Indigo Hoche - 18 Avenue Hoche',
-  bikeAccess: 'Station Vélib\' Hoche - Beaujon (N° 8004)',
+  locationName: 'Hôtel France Amériques',
+  address: '9-11 Avenue Franklin D. Roosevelt, 75008 Paris',
+  metroAccess: 'Station Franklin D. Roosevelt (Lignes 1, 9) ou Saint-Philippe du Roule (Ligne 9)',
+  rerAccess: 'RER C (Pont de l\'Alma) ou RER A (Charles de Gaulle - Étoile)',
+  parkingAccess: 'Parking Indigo Rond-Point des Champs-Élysées (Franklin D. Roosevelt)',
+  bikeAccess: 'Station Vélib\' Franklin D. Roosevelt (N° 8002)',
   registrationsOpen: true
 };

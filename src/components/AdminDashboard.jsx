@@ -685,7 +685,6 @@ export const AdminDashboard = () => {
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-blue-400">{comp.sector}</span>
                       </div>
 
                       <button

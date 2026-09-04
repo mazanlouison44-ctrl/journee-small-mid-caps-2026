@@ -1,33 +1,67 @@
 import React, { useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { AVAILABLE_SECTORS } from '../data/companies';
-import { Search, Filter, Check, Plus, AlertCircle, Building2, ArrowRight } from 'lucide-react';
+import { Search, Check, Plus, AlertCircle, Building2, ArrowRight } from 'lucide-react';
+
+export const CompanyLogo = ({ company, isSelected, size = 'md' }) => {
+  const [imgSrc, setImgSrc] = useState(
+    company.logoUrl || (company.domain ? `https://logo.clearbit.com/${company.domain}` : null)
+  );
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = () => {
+    if (!hasError && company.domain) {
+      setImgSrc(`https://www.google.com/s2/favicons?domain=${company.domain}&sz=128`);
+      setHasError(true);
+    } else {
+      setImgSrc(null);
+    }
+  };
+
+  const dimClass = size === 'sm' ? 'w-9 h-9 text-xs' : 'w-12 h-12 text-base';
+
+  if (!imgSrc) {
+    return (
+      <div className={`${dimClass} rounded-xl flex items-center justify-center font-extrabold border transition-colors shrink-0 ${
+        isSelected ? 'bg-blue-900 text-white border-blue-900' : 'bg-slate-100 text-blue-900 border-slate-200'
+      }`}>
+        {company.name.slice(0, 2).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
+    <div className={`${dimClass} rounded-xl border border-slate-200 bg-white p-1 flex items-center justify-center overflow-hidden shrink-0 shadow-xs`}>
+      <img
+        src={imgSrc}
+        alt={`Logo ${company.name}`}
+        onError={handleError}
+        className="max-w-full max-h-full object-contain"
+      />
+    </div>
+  );
+};
 
 export const CompaniesSection = () => {
   const { companies, selectedCompanyIds, toggleSelectCompany, openWizard } = useApp();
-  
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedSector, setSelectedSector] = useState('Tous les secteurs');
 
-  // Filter & sort active companies alphabetically (A-Z)
+  // Sort active companies alphabetically (A-Z)
   const activeCompanies = useMemo(() => {
     return [...companies]
       .filter((c) => c.active !== false)
       .sort((a, b) => a.name.localeCompare(b.name, 'fr', { sensitivity: 'base' }));
   }, [companies]);
 
-  // Apply search & sector filters
+  // Search filter
   const filteredCompanies = useMemo(() => {
     return activeCompanies.filter((company) => {
-      const matchesSearch =
+      return (
         company.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         company.ticker?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        company.description.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesSector =
-        selectedSector === 'Tous les secteurs' || company.sector === selectedSector;
-      return matchesSearch && matchesSector;
+        company.description.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     });
-  }, [activeCompanies, searchQuery, selectedSector]);
+  }, [activeCompanies, searchQuery]);
 
   return (
     <section id="societes" className="py-20 bg-white relative border-b border-slate-200">
@@ -37,10 +71,10 @@ export const CompaniesSection = () => {
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-4">
           <div>
             <div className="inline-block px-3 py-1 bg-blue-50 text-blue-900 rounded-full text-xs font-semibold tracking-wider uppercase mb-2">
-              Catalogue Officiel (Ordre Alphabétique)
+              Catalogue Officiel (Ordre Alphabétique A à Z)
             </div>
             <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 font-display">
-              Sociétés participantes
+              Sociétés participantes ({activeCompanies.length})
             </h2>
             <p className="text-slate-600 mt-2 max-w-xl text-sm sm:text-base">
               Cochez simplement les dirigeants d'entreprises cotées que vous souhaitez rencontrer. L'équipe EuroLand Corporate se charge d'organiser votre planning.
@@ -67,37 +101,18 @@ export const CompaniesSection = () => {
           </div>
         </div>
 
-        {/* Filter Controls Bar */}
-        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-8 flex flex-col md:flex-row gap-4 items-center justify-between shadow-xs">
-          
-          {/* Search Box */}
-          <div className="relative w-full md:w-80">
+        {/* Search Bar */}
+        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-8 flex items-center justify-between shadow-xs">
+          <div className="relative w-full max-w-md">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3.5" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Rechercher une société, ticker..."
+              placeholder="Rechercher par nom de société, ticker..."
               className="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent"
             />
           </div>
-
-          {/* Sector Filters */}
-          <div className="flex items-center space-x-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
-            <Filter className="w-4 h-4 text-slate-500 shrink-0 hidden sm:block" />
-            <select
-              value={selectedSector}
-              onChange={(e) => setSelectedSector(e.target.value)}
-              className="bg-white border border-slate-300 text-slate-800 text-sm font-semibold rounded-xl px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            >
-              {AVAILABLE_SECTORS.map((sector) => (
-                <option key={sector} value={sector}>
-                  {sector}
-                </option>
-              ))}
-            </select>
-          </div>
-
         </div>
 
         {/* Companies Grid */}
@@ -118,14 +133,8 @@ export const CompaniesSection = () => {
                   {/* Top card header */}
                   <div className="flex items-start justify-between mb-4 gap-3">
                     <div className="flex items-center space-x-3">
-                      {/* Logo Avatar Badge */}
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-extrabold text-lg border transition-colors ${
-                        isSelected
-                          ? 'bg-blue-900 text-white border-blue-900'
-                          : 'bg-slate-50 text-blue-900 border-slate-200 group-hover:border-blue-200'
-                      }`}>
-                        {company.name.slice(0, 2).toUpperCase()}
-                      </div>
+                      {/* Real Company Logo */}
+                      <CompanyLogo company={company} isSelected={isSelected} size="md" />
                       
                       <div>
                         <h3 className="font-bold text-slate-900 text-lg group-hover:text-blue-900 transition-colors font-display">
@@ -153,15 +162,8 @@ export const CompaniesSection = () => {
                     </button>
                   </div>
 
-                  {/* Sector Tag */}
-                  <div className="mb-3">
-                    <span className="text-xs font-semibold px-3 py-1 bg-blue-50 text-blue-900 rounded-full">
-                      {company.sector}
-                    </span>
-                  </div>
-
                   {/* Description */}
-                  <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed font-normal">
+                  <p className="text-slate-600 text-sm line-clamp-3 leading-relaxed font-normal mt-2">
                     {company.description}
                   </p>
 
@@ -209,12 +211,12 @@ export const CompaniesSection = () => {
           <div className="text-center py-16 bg-slate-50 rounded-2xl border border-slate-200">
             <Building2 className="w-12 h-12 text-slate-400 mx-auto mb-3" />
             <h3 className="text-lg font-bold text-slate-800">Aucune société trouvée</h3>
-            <p className="text-slate-500 text-sm mt-1">Essayez de modifier votre recherche ou le filtre de secteur.</p>
+            <p className="text-slate-500 text-sm mt-1">Essayez de modifier votre recherche.</p>
             <button
-              onClick={() => { setSearchQuery(''); setSelectedSector('Tous les secteurs'); }}
+              onClick={() => setSearchQuery('')}
               className="mt-4 text-xs font-bold text-blue-900 underline"
             >
-              Réinitialiser les filtres
+              Réinitialiser la recherche
             </button>
           </div>
         )}

@@ -3,7 +3,8 @@ export const INITIAL_COMPANIES = [
     id: 'agripower',
     name: 'Agripower',
     ticker: 'ALAGR',
-    sector: 'Énergie & Environnement',
+    domain: 'agripower-france.com',
+    logoUrl: 'https://logo.clearbit.com/agripower-france.com',
     description: 'Expert des solutions de méthanisation individuelle et collective.',
     active: true,
     availabilityConstraint: null
@@ -12,7 +13,8 @@ export const INITIAL_COMPANIES = [
     id: 'altheora',
     name: 'Altheora',
     ticker: 'ALTHE',
-    sector: 'Industrie & Matériaux',
+    domain: 'altheora.com',
+    logoUrl: 'https://logo.clearbit.com/altheora.com',
     description: 'Transformateur de matériaux composites et polymères pour le bâtiment et l\'industrie.',
     active: true,
     availabilityConstraint: null
@@ -21,7 +23,8 @@ export const INITIAL_COMPANIES = [
     id: 'amoeba',
     name: 'Amoeba',
     ticker: 'ALMIB',
-    sector: 'Cleantech & Biotech',
+    domain: 'amoeba-nature.com',
+    logoUrl: 'https://logo.clearbit.com/amoeba-nature.com',
     description: 'Biocide biologique pour le traitement de l\'eau et la protection des plantes.',
     active: true,
     availabilityConstraint: null
@@ -30,7 +33,8 @@ export const INITIAL_COMPANIES = [
     id: 'ateme',
     name: 'Ateme',
     ticker: 'ATEME',
-    sector: 'Tech & Vidéo',
+    domain: 'ateme.com',
+    logoUrl: 'https://logo.clearbit.com/ateme.com',
     description: 'Leader mondial des solutions de compression et de diffusion vidéo.',
     active: true,
     availabilityConstraint: null
@@ -39,7 +43,8 @@ export const INITIAL_COMPANIES = [
     id: 'bilendi',
     name: 'Bilendi',
     ticker: 'ALBLD',
-    sector: 'Tech & Marketing Digital',
+    domain: 'bilendi.com',
+    logoUrl: 'https://logo.clearbit.com/bilendi.com',
     description: 'Technologies et services pour les études de marché et les datas consommateurs.',
     active: true,
     availabilityConstraint: null
@@ -48,7 +53,8 @@ export const INITIAL_COMPANIES = [
     id: 'biouv',
     name: 'Bio-UV Group',
     ticker: 'ALTUV',
-    sector: 'Cleantech & Environnement',
+    domain: 'bio-uv.com',
+    logoUrl: 'https://logo.clearbit.com/bio-uv.com',
     description: 'Spécialiste des systèmes de désinfection de l\'eau par ultraviolets.',
     active: true,
     availabilityConstraint: null
@@ -57,7 +63,8 @@ export const INITIAL_COMPANIES = [
     id: 'boa',
     name: 'BOA Concept',
     ticker: 'ALBOA',
-    sector: 'Industrie & Intralogistique',
+    domain: 'boa-concept.com',
+    logoUrl: 'https://logo.clearbit.com/boa-concept.com',
     description: 'Concepteur de convoyeurs modulaires intelligents pour la e-logistique.',
     active: true,
     availabilityConstraint: null
@@ -66,7 +73,8 @@ export const INITIAL_COMPANIES = [
     id: 'bourse-direct',
     name: 'Bourse Direct',
     ticker: 'BSD',
-    sector: 'Finance & Bourse',
+    domain: 'boursedirect.fr',
+    logoUrl: 'https://logo.clearbit.com/boursedirect.fr',
     description: 'Pionnier et acteur majeur du courtage en ligne en France.',
     active: true,
     availabilityConstraint: null
@@ -75,7 +83,8 @@ export const INITIAL_COMPANIES = [
     id: 'deezer',
     name: 'Deezer',
     ticker: 'DEEZR',
-    sector: 'Tech & Média',
+    domain: 'deezer.com',
+    logoUrl: 'https://logo.clearbit.com/deezer.com',
     description: 'Plateforme mondiale d\'écoute de musique et de contenus audios en streaming.',
     active: true,
     availabilityConstraint: null
@@ -84,7 +93,8 @@ export const INITIAL_COMPANIES = [
     id: 'delfingen',
     name: 'Delfingen',
     ticker: 'DELF',
-    sector: 'Industrie & Automobile',
+    domain: 'delfingen.com',
+    logoUrl: 'https://logo.clearbit.com/delfingen.com',
     description: 'Leader mondial des systèmes de protection de réseaux d\'énergie et fluides embarqués.',
     active: true,
     availabilityConstraint: null
@@ -93,7 +103,8 @@ export const INITIAL_COMPANIES = [
     id: 'dms',
     name: 'DMS Imaging',
     ticker: 'ALDMS',
-    sector: 'Santé & Medtech',
+    domain: 'dms-imaging.com',
+    logoUrl: 'https://logo.clearbit.com/dms-imaging.com',
     description: 'Acteur majeur de la conception et fabrication de systèmes d\'imagerie médicale.',
     active: true,
     availabilityConstraint: null
@@ -102,7 +113,8 @@ export const INITIAL_COMPANIES = [
     id: 'genoway',
     name: 'genOway',
     ticker: 'ALGEN',
-    sector: 'Santé & Biotech',
+    domain: 'genoway.com',
+    logoUrl: 'https://logo.clearbit.com/genoway.com',
     description: 'Société de biotechnologie spécialisée dans la conception de modèles cellulaires et animaux.',
     active: true,
     availabilityConstraint: null
@@ -111,7 +123,8 @@ export const INITIAL_COMPANIES = [
     id: 'hamilton',
     name: 'Hamilton Global',
     ticker: 'ALHMG',
-    sector: 'Finance & Conseil',
+    domain: 'hamilton-global.com',
+    logoUrl: 'https://logo.clearbit.com/hamilton-global.com',
     description: 'Société de gestion et d\'accompagnement en stratégie financière.',
     active: true,
     availabilityConstraint: null
@@ -120,7 +133,8 @@ export const INITIAL_COMPANIES = [
     id: 'hunyvers',
     name: 'Hunyvers',
     ticker: 'ALHUN',
-    sector: 'Loisirs & Distribution',
+    domain: 'hunyvers.com',
+    logoUrl: 'https://logo.clearbit.com/hunyvers.com',
     description: 'Spécialiste du voyage nomade et de la distribution de véhicules de loisirs.',
     active: true,
     availabilityConstraint: null
@@ -129,7 +143,8 @@ export const INITIAL_COMPANIES = [
     id: 'icape',
     name: 'ICAPE',
     ticker: 'ALICA',
-    sector: 'Tech & Électronique',
+    domain: 'icape-group.com',
+    logoUrl: 'https://logo.clearbit.com/icape-group.com',
     description: 'Distributeur technologique de circuits imprimés et pièces techniques sur mesure.',
     active: true,
     availabilityConstraint: null
@@ -138,7 +153,8 @@ export const INITIAL_COMPANIES = [
     id: 'ieva',
     name: 'IEVA',
     ticker: 'IEVA',
-    sector: 'Consommation & BeautyTech',
+    domain: 'ieva-group.com',
+    logoUrl: 'https://logo.clearbit.com/ieva-group.com',
     description: 'Pionnier de la beauté personnalisée et d\'objets connectés de soin.',
     active: true,
     availabilityConstraint: null
@@ -147,7 +163,8 @@ export const INITIAL_COMPANIES = [
     id: 'infotel',
     name: 'Infotel',
     ticker: 'INF',
-    sector: 'Tech & Services IT',
+    domain: 'infotel.com',
+    logoUrl: 'https://logo.clearbit.com/infotel.com',
     description: 'Partenaire de la transformation digitale des grands comptes bancaires et industriels.',
     active: true,
     availabilityConstraint: null
@@ -156,7 +173,8 @@ export const INITIAL_COMPANIES = [
     id: 'ldc',
     name: 'LDC',
     ticker: 'LOUP',
-    sector: 'Agroalimentaire',
+    domain: 'ldc.fr',
+    logoUrl: 'https://logo.clearbit.com/ldc.fr',
     description: 'Leader européen de la volaille et des produits traiteurs.',
     active: true,
     availabilityConstraint: null
@@ -165,7 +183,8 @@ export const INITIAL_COMPANIES = [
     id: 'maunakea',
     name: 'Mauna Kea Technologies',
     ticker: 'MKEA',
-    sector: 'Santé & Medtech',
+    domain: 'maunakeatech.com',
+    logoUrl: 'https://logo.clearbit.com/maunakeatech.com',
     description: 'Dispositifs médicaux et endomicroscopie laser Cellvizio.',
     active: true,
     availabilityConstraint: null
@@ -174,7 +193,8 @@ export const INITIAL_COMPANIES = [
     id: 'memscap',
     name: 'Memscap',
     ticker: 'MEMS',
-    sector: 'Tech & Semi-conducteurs',
+    domain: 'memscap.com',
+    logoUrl: 'https://logo.clearbit.com/memscap.com',
     description: 'Fournisseur de solutions basées sur les technologies MEMS (capteurs de pression).',
     active: true,
     availabilityConstraint: null
@@ -183,7 +203,8 @@ export const INITIAL_COMPANIES = [
     id: 'mint',
     name: 'Mint',
     ticker: 'ALMNT',
-    sector: 'Énergie & Services',
+    domain: 'mint.eco',
+    logoUrl: 'https://logo.clearbit.com/mint.eco',
     description: 'Fournisseur d\'énergie éco-responsable et de services télécoms.',
     active: true,
     availabilityConstraint: null
@@ -192,7 +213,8 @@ export const INITIAL_COMPANIES = [
     id: 'netgem',
     name: 'Netgem',
     ticker: 'ALNTG',
-    sector: 'Tech & Divertissement',
+    domain: 'netgem.com',
+    logoUrl: 'https://logo.clearbit.com/netgem.com',
     description: 'Solutions technologiques pour le divertissement numérique et la TV connectée.',
     active: true,
     availabilityConstraint: null
@@ -201,7 +223,8 @@ export const INITIAL_COMPANIES = [
     id: 'obiz',
     name: 'Obiz',
     ticker: 'ALBIZ',
-    sector: 'Tech & Marketing',
+    domain: 'obiz.fr',
+    logoUrl: 'https://logo.clearbit.com/obiz.fr',
     description: 'Plateforme digitale de programmes de fidélisation et d\'engagement relationnel.',
     active: true,
     availabilityConstraint: null
@@ -210,7 +233,8 @@ export const INITIAL_COMPANIES = [
     id: 'ovhcloud',
     name: 'OVHcloud',
     ticker: 'OVH',
-    sector: 'Tech & Cloud',
+    domain: 'ovhcloud.com',
+    logoUrl: 'https://logo.clearbit.com/ovhcloud.com',
     description: 'Acteur mondial et leader européen du Cloud souverain et d\'infrastructures IT.',
     active: true,
     availabilityConstraint: null
@@ -219,7 +243,8 @@ export const INITIAL_COMPANIES = [
     id: 'qwamplify',
     name: 'Qwamplify',
     ticker: 'ALQWA',
-    sector: 'Tech & Marketing Digital',
+    domain: 'qwamplify.com',
+    logoUrl: 'https://logo.clearbit.com/qwamplify.com',
     description: 'Agence média et marketing digital spécialisée en acquisition et fidélisation.',
     active: true,
     availabilityConstraint: null
@@ -228,7 +253,8 @@ export const INITIAL_COMPANIES = [
     id: 'redelfi',
     name: 'Redelfi',
     ticker: 'RDF',
-    sector: 'Énergie & Transition Énergétique',
+    domain: 'redelfi.com',
+    logoUrl: 'https://logo.clearbit.com/redelfi.com',
     description: 'Société engagée dans le développement de projets de transition énergétique et BESS.',
     active: true,
     availabilityConstraint: null
@@ -237,7 +263,8 @@ export const INITIAL_COMPANIES = [
     id: 'reworld',
     name: 'Reworld Media',
     ticker: 'ALREW',
-    sector: 'Médias & Digital',
+    domain: 'reworldmedia.com',
+    logoUrl: 'https://logo.clearbit.com/reworldmedia.com',
     description: 'Groupe média multi-plateformes et leader des médias thématiques en France.',
     active: true,
     availabilityConstraint: null
@@ -246,7 +273,8 @@ export const INITIAL_COMPANIES = [
     id: 'rtl',
     name: 'RT&L',
     ticker: 'RTL',
-    sector: 'Logistique & Transport',
+    domain: 'groupe-rtl.fr',
+    logoUrl: 'https://logo.clearbit.com/groupe-rtl.fr',
     description: 'Solutions de transport spécialisé et logistique industrielle.',
     active: true,
     availabilityConstraint: null
@@ -255,7 +283,8 @@ export const INITIAL_COMPANIES = [
     id: 'selectirente',
     name: 'Selectirente',
     ticker: 'SELEC',
-    sector: 'Immobilier',
+    domain: 'selectirente.com',
+    logoUrl: 'https://logo.clearbit.com/selectirente.com',
     description: 'Foncière spécialisée dans les commerces de centre-ville.',
     active: true,
     availabilityConstraint: null
@@ -264,7 +293,8 @@ export const INITIAL_COMPANIES = [
     id: 'stif',
     name: 'STIF',
     ticker: 'ALSTI',
-    sector: 'Industrie & Énergie',
+    domain: 'stifnet.com',
+    logoUrl: 'https://logo.clearbit.com/stifnet.com',
     description: 'Spécialiste de la protection contre les explosions de poussières et batteries BESS.',
     active: true,
     availabilityConstraint: null
@@ -273,7 +303,8 @@ export const INITIAL_COMPANIES = [
     id: 'streamwide',
     name: 'StreamWIDE',
     ticker: 'ALSTW',
-    sector: 'Tech & Télécoms',
+    domain: 'streamwide.com',
+    logoUrl: 'https://logo.clearbit.com/streamwide.com',
     description: 'Éditeur de logiciels de communications critiques et de réseaux sécurisés.',
     active: true,
     availabilityConstraint: null
@@ -282,7 +313,8 @@ export const INITIAL_COMPANIES = [
     id: 'sword',
     name: 'Sword',
     ticker: 'SWP',
-    sector: 'Tech & Services IT',
+    domain: 'sword-group.com',
+    logoUrl: 'https://logo.clearbit.com/sword-group.com',
     description: 'Leader du conseil en logiciels et transformation digitale d\'entreprise.',
     active: true,
     availabilityConstraint: {
@@ -294,7 +326,8 @@ export const INITIAL_COMPANIES = [
     id: 'tikehau',
     name: 'Tikehau Capital',
     ticker: 'TKO',
-    sector: 'Finance & Investissement',
+    domain: 'tikehaucapital.com',
+    logoUrl: 'https://logo.clearbit.com/tikehaucapital.com',
     description: 'Groupe mondial de gestion d\'actifs alternatifs.',
     active: true,
     availabilityConstraint: null
@@ -303,7 +336,8 @@ export const INITIAL_COMPANIES = [
     id: 'valbiotis',
     name: 'Valbiotis',
     ticker: 'ALVAL',
-    sector: 'Santé & Biotech',
+    domain: 'valbiotis.com',
+    logoUrl: 'https://logo.clearbit.com/valbiotis.com',
     description: 'Recherche et développement de produits de nutrition santé préventive.',
     active: true,
     availabilityConstraint: null
@@ -312,7 +346,8 @@ export const INITIAL_COMPANIES = [
     id: 'wendel',
     name: 'Wendel',
     ticker: 'MF',
-    sector: 'Finance & Investissement',
+    domain: 'wendelgroup.com',
+    logoUrl: 'https://logo.clearbit.com/wendelgroup.com',
     description: 'Société d\'investissement internationale dans des entreprises leaders.',
     active: true,
     availabilityConstraint: null
@@ -321,44 +356,12 @@ export const INITIAL_COMPANIES = [
     id: 'xilam',
     name: 'Xilam',
     ticker: 'XIL',
-    sector: 'Médias & Animation',
+    domain: 'xilam.com',
+    logoUrl: 'https://logo.clearbit.com/xilam.com',
     description: 'Studio de production de séries et films d\'animation de renommée mondiale.',
     active: true,
     availabilityConstraint: null
   }
-];
-
-export const AVAILABLE_SECTORS = [
-  'Tous les secteurs',
-  'Agroalimentaire',
-  'Cleantech & Biotech',
-  'Consommation & BeautyTech',
-  'Énergie & Environnement',
-  'Énergie & Transition Énergétique',
-  'Finance & Bourse',
-  'Finance & Conseil',
-  'Finance & Investissement',
-  'Immobilier',
-  'Industrie & Automobile',
-  'Industrie & Intralogistique',
-  'Industrie & Matériaux',
-  'Industrie & Énergie',
-  'Logistique & Transport',
-  'Loisirs & Distribution',
-  'Médias & Animation',
-  'Médias & Digital',
-  'Santé & Biotech',
-  'Santé & Medtech',
-  'Tech & Cloud',
-  'Tech & Divertissement',
-  'Tech & Électronique',
-  'Tech & Marketing',
-  'Tech & Marketing Digital',
-  'Tech & Média',
-  'Tech & Semi-conducteurs',
-  'Tech & Services IT',
-  'Tech & Télécoms',
-  'Tech & Vidéo'
 ];
 
 export const TIME_SLOTS = [
