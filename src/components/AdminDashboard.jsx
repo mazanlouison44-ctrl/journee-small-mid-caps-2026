@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { TIME_SLOTS } from '../data/companies';
 import {
   Shield, Building2, Users, Calendar, Download, Plus, Edit, Eye, EyeOff,
-  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders, Link, Copy
+  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders, Link, Copy, CheckSquare, Square
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -28,6 +28,8 @@ export const AdminDashboard = () => {
   const [copiedScript, setCopiedScript] = useState(false);
 
   const [searchReg, setSearchReg] = useState('');
+  const [selectedRegIds, setSelectedRegIds] = useState([]);
+
   const [generatedAgenda, setGeneratedAgenda] = useState(null);
   const [generating, setGenerating] = useState(false);
 
@@ -40,13 +42,37 @@ export const AdminDashboard = () => {
       r.identity.company.toLowerCase().includes(searchReg.toLowerCase())
   );
 
-  // CSV Export for Participants
-  const exportParticipantsCSV = () => {
+  // Checkbox helpers
+  const toggleSelectReg = (id) => {
+    setSelectedRegIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedRegIds.length === filteredRegistrations.length) {
+      setSelectedRegIds([]);
+    } else {
+      setSelectedRegIds(filteredRegistrations.map((r) => r.id));
+    }
+  };
+
+  // CSV Export for Participants (All or Selected)
+  const exportParticipantsCSV = (onlySelected = false) => {
+    const listToExport = onlySelected
+      ? registrations.filter((r) => selectedRegIds.includes(r.id))
+      : registrations;
+
+    if (listToExport.length === 0) {
+      alert('Veuillez sélectionner au moins un dossier à exporter.');
+      return;
+    }
+
     const headers = [
       'ID', 'Date Inscription', 'Civilité', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Société', 'Fonction', 'Type Investisseur', 'Disponibilités', 'Remarques', 'Nombre Sociétés Demandées'
     ];
 
-    const rows = registrations.map((r) => [
+    const rows = listToExport.map((r) => [
       r.id,
       r.createdAt,
       r.identity.civility,
@@ -66,20 +92,29 @@ export const AdminDashboard = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `JSMC2026_Participants_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `JSMC2026_Participants_${onlySelected ? 'Selection' : 'Tous'}_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
   };
 
-  // CSV Export for Demandes de RDV
-  const exportDemandesCSV = () => {
-    const headers = ['Participant', 'Email', 'Société Participant', 'Société Demandée', 'Format', 'Actionnaire', 'Connaissance', 'Priorité', 'Disponibilités Participant'];
+  // CSV Export for Demandes de RDV (All or Selected)
+  const exportDemandesCSV = (onlySelected = false) => {
+    const listToExport = onlySelected
+      ? registrations.filter((r) => selectedRegIds.includes(r.id))
+      : registrations;
+
+    if (listToExport.length === 0) {
+      alert('Veuillez sélectionner au moins un dossier à exporter.');
+      return;
+    }
+
+    const headers = ['ID Participant', 'Participant', 'Email', 'Société Participant', 'Société Demandée', 'Format', 'Actionnaire', 'Connaissance', 'Priorité', 'Disponibilités Participant'];
     
     const companyMap = new Map(companies.map(c => [c.id, c.name]));
     const rows = [];
 
-    registrations.forEach((r) => {
+    listToExport.forEach((r) => {
       const pName = `${r.identity.firstName} ${r.identity.lastName}`;
       const avail = r.availability.fullDay ? 'Toute la journée (9h-18h)' : r.availability.slots.join(' / ');
 
@@ -87,6 +122,7 @@ export const AdminDashboard = () => {
         const compName = companyMap.get(cid) || cid;
         const pref = r.companyPreferences[cid] || {};
         rows.push([
+          r.id,
           `"${pName}"`,
           r.identity.email,
           `"${r.identity.company}"`,
@@ -104,7 +140,48 @@ export const AdminDashboard = () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `JSMC2026_Demandes_RDV_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `JSMC2026_Demandes_RDV_${onlySelected ? 'Selection' : 'Toutes'}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Export Selected Folders into detailed text summary files
+  const exportSelectedDetailsText = () => {
+    const listToExport = registrations.filter((r) => selectedRegIds.includes(r.id));
+    if (listToExport.length === 0) {
+      alert('Veuillez sélectionner au moins un dossier.');
+      return;
+    }
+
+    const companyMap = new Map(companies.map(c => [c.id, c.name]));
+
+    let fullText = `=== EUROLAND CORPORATE — SÉLECTION DE DOSSIERS INSCRIPTION JSMC 2026 ===\n\n`;
+    listToExport.forEach((r, idx) => {
+      fullText += `--------------------------------------------------\n`;
+      fullText += `DOSSIER N° ${idx + 1} — ${r.id} (${r.identity.firstName} ${r.identity.lastName})\n`;
+      fullText += `--------------------------------------------------\n`;
+      fullText += `Participant : ${r.identity.civility} ${r.identity.firstName} ${r.identity.lastName}\n`;
+      fullText += `Société : ${r.identity.company} (${r.identity.investorType})\n`;
+      fullText += `Fonction : ${r.identity.jobTitle}\n`;
+      fullText += `Email : ${r.identity.email} | Tél : ${r.identity.phone}\n`;
+      fullText += `Disponibilités : ${r.availability.fullDay ? 'Toute la journée (9h-18h)' : r.availability.slots.join(' / ')}\n`;
+      if (r.availability.notes) fullText += `Remarques : ${r.availability.notes}\n`;
+      fullText += `\nSociétés demandées (${r.selectedCompanies.length}) :\n`;
+
+      r.selectedCompanies.forEach(cid => {
+        const pref = r.companyPreferences[cid] || {};
+        const cName = companyMap.get(cid) || cid;
+        fullText += `  - ${cName} : Format ${pref.format || 'One-to-One'} | Priorité ${pref.priority || 'Souhaitée'} | Connaissance ${pref.knowledgeLevel || 3}/5\n`;
+      });
+      fullText += `\n\n`;
+    });
+
+    const blob = new Blob([fullText], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Synthese_Dossiers_Selectionnes_${new Date().toISOString().slice(0, 10)}.txt`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -258,47 +335,100 @@ export const AdminDashboard = () => {
           })}
         </div>
 
-        {/* TAB 1: REGISTRATIONS */}
+        {/* TAB 1: REGISTRATIONS WITH CHECKBOX SELECTION & TARGETED EXPORTS */}
         {activeTab === 'registrations' && (
           <div className="space-y-6">
             
-            {/* Top Toolbar */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="relative w-full sm:w-80">
+            {/* Selection Status & Action Toolbar */}
+            <div className="bg-slate-850 p-4 rounded-xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
+              
+              {/* Search Box */}
+              <div className="relative w-full md:w-72">
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
                 <input
                   type="text"
                   value={searchReg}
                   onChange={(e) => setSearchReg(e.target.value)}
-                  placeholder="Filtrer par nom, société..."
+                  placeholder="Rechercher par nom, société..."
                   className="w-full pl-9 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-xs text-white placeholder-slate-400 focus:outline-none focus:border-blue-500"
                 />
               </div>
 
-              <div className="flex items-center space-x-3 w-full sm:w-auto">
+              {/* Selection Counter pill */}
+              <div className="flex items-center space-x-2 text-xs font-semibold text-slate-300">
+                <span className="px-3 py-1 bg-blue-900 text-blue-200 rounded-md font-bold">
+                  {selectedRegIds.length} dossier(s) sélectionné(s) / {filteredRegistrations.length}
+                </span>
+                {selectedRegIds.length > 0 && (
+                  <button
+                    onClick={() => setSelectedRegIds([])}
+                    className="text-xs text-slate-400 hover:text-white underline"
+                  >
+                    Désélectionner tout
+                  </button>
+                )}
+              </div>
+
+              {/* Download Actions */}
+              <div className="flex flex-wrap gap-2 w-full md:w-auto">
                 <button
-                  onClick={exportParticipantsCSV}
-                  className="flex-1 sm:flex-none px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center space-x-1.5"
+                  onClick={() => exportParticipantsCSV(selectedRegIds.length > 0)}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                    selectedRegIds.length > 0
+                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md'
+                      : 'bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200'
+                  }`}
                 >
                   <FileSpreadsheet className="w-4 h-4" />
-                  <span>Exporter PARTICIPANTS (CSV)</span>
+                  <span>
+                    {selectedRegIds.length > 0 ? `Exporter les ${selectedRegIds.length} Participants` : 'Exporter Tous les Participants'}
+                  </span>
                 </button>
 
                 <button
-                  onClick={exportDemandesCSV}
-                  className="flex-1 sm:flex-none px-4 py-2 bg-blue-700 hover:bg-blue-600 text-white rounded-lg text-xs font-bold transition-colors flex items-center justify-center space-x-1.5"
+                  onClick={() => exportDemandesCSV(selectedRegIds.length > 0)}
+                  className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
+                    selectedRegIds.length > 0
+                      ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
+                      : 'bg-blue-900/60 hover:bg-blue-800 text-blue-200'
+                  }`}
                 >
                   <Download className="w-4 h-4" />
-                  <span>Exporter DEMANDES DE RDV (CSV)</span>
+                  <span>
+                    {selectedRegIds.length > 0 ? `Exporter ${selectedRegIds.length} Demandes (CSV)` : 'Exporter Toutes les Demandes'}
+                  </span>
                 </button>
+
+                {selectedRegIds.length > 0 && (
+                  <button
+                    onClick={exportSelectedDetailsText}
+                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center space-x-1.5"
+                  >
+                    <Download className="w-4 h-4 text-blue-400" />
+                    <span>Télécharger Fiche Synthèse (.TXT)</span>
+                  </button>
+                )}
               </div>
             </div>
 
-            {/* Table */}
+            {/* Interactive Table with Checkboxes */}
             <div className="bg-slate-850 rounded-xl border border-slate-800 overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
                 <thead className="bg-slate-800 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-700">
                   <tr>
+                    <th className="p-3.5 w-10 text-center">
+                      <button
+                        onClick={toggleSelectAll}
+                        className="text-slate-300 hover:text-white"
+                        title="Tout sélectionner / Tout désélectionner"
+                      >
+                        {selectedRegIds.length === filteredRegistrations.length && filteredRegistrations.length > 0 ? (
+                          <CheckSquare className="w-4 h-4 text-blue-400" />
+                        ) : (
+                          <Square className="w-4 h-4" />
+                        )}
+                      </button>
+                    </th>
                     <th className="p-3.5">ID / Date</th>
                     <th className="p-3.5">Participant</th>
                     <th className="p-3.5">Société / Fonction</th>
@@ -308,49 +438,71 @@ export const AdminDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
-                  {filteredRegistrations.map((reg) => (
-                    <tr key={reg.id} className="hover:bg-slate-800/50 transition-colors">
-                      <td className="p-3.5">
-                        <span className="font-bold text-white block">{reg.id}</span>
-                        <span className="text-[10px] text-slate-400">
-                          {new Date(reg.createdAt).toLocaleDateString('fr-FR')}
-                        </span>
-                      </td>
+                  {filteredRegistrations.map((reg) => {
+                    const isSelected = selectedRegIds.includes(reg.id);
 
-                      <td className="p-3.5">
-                        <span className="font-bold text-white block">
-                          {reg.identity.civility} {reg.identity.firstName} {reg.identity.lastName}
-                        </span>
-                        <span className="text-[11px] text-slate-400">{reg.identity.email}</span>
-                      </td>
+                    return (
+                      <tr
+                        key={reg.id}
+                        className={`transition-colors cursor-pointer ${
+                          isSelected ? 'bg-blue-950/40 font-medium' : 'hover:bg-slate-800/50'
+                        }`}
+                      >
+                        {/* Checkbox Column */}
+                        <td className="p-3.5 text-center" onClick={() => toggleSelectReg(reg.id)}>
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleSelectReg(reg.id)}
+                            className="w-4 h-4 text-blue-600 rounded border-slate-700 focus:ring-blue-500 cursor-pointer"
+                          />
+                        </td>
 
-                      <td className="p-3.5">
-                        <span className="font-bold text-blue-300 block">{reg.identity.company}</span>
-                        <span className="text-[11px] text-slate-400">{reg.identity.jobTitle} ({reg.identity.investorType})</span>
-                      </td>
+                        <td className="p-3.5" onClick={() => toggleSelectReg(reg.id)}>
+                          <span className="font-bold text-white block">{reg.id}</span>
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(reg.createdAt).toLocaleDateString('fr-FR')}
+                          </span>
+                        </td>
 
-                      <td className="p-3.5">
-                        <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 rounded font-semibold text-[11px]">
-                          {reg.availability.fullDay ? 'Toute la journée' : `${reg.availability.slots.length} créneau(x)`}
-                        </span>
-                      </td>
+                        <td className="p-3.5" onClick={() => toggleSelectReg(reg.id)}>
+                          <span className="font-bold text-white block">
+                            {reg.identity.civility} {reg.identity.firstName} {reg.identity.lastName}
+                          </span>
+                          <span className="text-[11px] text-slate-400">{reg.identity.email}</span>
+                        </td>
 
-                      <td className="p-3.5">
-                        <span className="px-2.5 py-1 bg-blue-900/60 text-blue-200 rounded-full font-bold text-[11px] inline-block">
-                          {reg.selectedCompanies.length} sociétés
-                        </span>
-                      </td>
+                        <td className="p-3.5" onClick={() => toggleSelectReg(reg.id)}>
+                          <span className="font-bold text-blue-300 block">{reg.identity.company}</span>
+                          <span className="text-[11px] text-slate-400">{reg.identity.jobTitle} ({reg.identity.investorType})</span>
+                        </td>
 
-                      <td className="p-3.5">
-                        <button
-                          onClick={() => alert(`Détail des choix de ${reg.identity.firstName} ${reg.identity.lastName} :\n` + reg.selectedCompanies.map(c => `- ${c}`).join('\n'))}
-                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold rounded border border-slate-700"
-                        >
-                          Détails
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
+                        <td className="p-3.5" onClick={() => toggleSelectReg(reg.id)}>
+                          <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 rounded font-semibold text-[11px]">
+                            {reg.availability.fullDay ? 'Toute la journée' : `${reg.availability.slots.length} créneau(x)`}
+                          </span>
+                        </td>
+
+                        <td className="p-3.5" onClick={() => toggleSelectReg(reg.id)}>
+                          <span className="px-2.5 py-1 bg-blue-900/60 text-blue-200 rounded-full font-bold text-[11px] inline-block">
+                            {reg.selectedCompanies.length} sociétés
+                          </span>
+                        </td>
+
+                        <td className="p-3.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              alert(`Détail des choix de ${reg.identity.firstName} ${reg.identity.lastName} :\n` + reg.selectedCompanies.map(c => `- ${c}`).join('\n'));
+                            }}
+                            className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold rounded border border-slate-700"
+                          >
+                            Détails
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
