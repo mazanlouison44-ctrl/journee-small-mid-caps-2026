@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { TIME_SLOTS } from '../data/companies';
 import {
   Shield, Building2, Users, Calendar, Download, Plus, Edit, Eye, EyeOff,
-  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders, Link, Copy, CheckSquare, Square, AlertTriangle
+  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders, Link, Copy, CheckSquare, Square, AlertTriangle, Users2, UserCheck
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -34,7 +34,7 @@ export const AdminDashboard = () => {
 
   // Deletion Confirmation Modal State
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [deleteTargets, setDeleteTargets] = useState([]); // array of IDs to delete
+  const [deleteTargets, setDeleteTargets] = useState([]);
   const [deleteTargetLabel, setDeleteTargetLabel] = useState('');
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
@@ -231,7 +231,7 @@ export const AdminDashboard = () => {
     document.body.removeChild(link);
   };
 
-  // Agenda Generation Algorithm (Évolution 22)
+  // Agenda Generation Algorithm with Strict One-to-One Solo vs One-to-Few Group Logic
   const runAgendaGeneration = () => {
     setGenerating(true);
     setTimeout(() => {
@@ -239,13 +239,22 @@ export const AdminDashboard = () => {
       const investorAgendas = {};
       const companyAgendas = {};
 
+      // Initialize company slot status tables
+      // Each slot has { mode: 'free' | 'One-to-One' | 'One-to-Few', participants: [] }
       companies.filter(c => c.active).forEach(c => {
         companyAgendas[c.id] = {
           company: c,
           slots: {}
         };
+        TIME_SLOTS.forEach(slot => {
+          companyAgendas[c.id].slots[slot] = {
+            mode: 'free',
+            participants: []
+          };
+        });
       });
 
+      // Sort registrations by creation time
       registrations.forEach(reg => {
         const pName = `${reg.identity.firstName} ${reg.identity.lastName} (${reg.identity.company})`;
         investorAgendas[reg.id] = {
@@ -255,6 +264,7 @@ export const AdminDashboard = () => {
 
         const userSlots = reg.availability.fullDay ? TIME_SLOTS : reg.availability.slots;
 
+        // Sort requests by priority (Prioritaire first)
         const sortedRequests = [...reg.selectedCompanies].sort((a, b) => {
           const prefA = reg.companyPreferences[a]?.priority === 'Prioritaire' ? 2 : 1;
           const prefB = reg.companyPreferences[b]?.priority === 'Prioritaire' ? 2 : 1;
@@ -265,18 +275,48 @@ export const AdminDashboard = () => {
           const comp = companyMap.get(cid);
           if (!comp || !comp.active) return;
 
+          const pref = reg.companyPreferences[cid] || {};
+          const reqFormat = pref.format || 'One-to-One';
           const allowedSlots = comp.availabilityConstraint?.allowedSlots || TIME_SLOTS;
 
+          // Find suitable slot obeying One-to-One exclusivity vs One-to-Few sharing
           const matchingSlot = userSlots.find(slot => {
             const isCompanyAllowed = allowedSlots.includes(slot);
-            const isCompanyFree = !companyAgendas[cid].slots[slot];
             const isInvestorFree = !investorAgendas[reg.id].schedule[slot];
-            return isCompanyAllowed && isCompanyFree && isInvestorFree;
+            if (!isCompanyAllowed || !isInvestorFree) return false;
+
+            const companySlotState = companyAgendas[cid].slots[slot];
+
+            // 1. If company slot is FREE -> match!
+            if (companySlotState.mode === 'free') {
+              return true;
+            }
+
+            // 2. If company slot is One-to-One -> STRICTLY SOLO! No one else can join.
+            if (companySlotState.mode === 'One-to-One') {
+              return false;
+            }
+
+            // 3. If company slot is One-to-Few -> Can share ONLY if requested format is One-to-Few or Indifférent
+            if (companySlotState.mode === 'One-to-Few') {
+              return reqFormat === 'One-to-Few' || reqFormat === 'Indifférent';
+            }
+
+            return false;
           });
 
           if (matchingSlot) {
-            investorAgendas[reg.id].schedule[matchingSlot] = comp.name;
-            companyAgendas[cid].slots[matchingSlot] = pName;
+            const slotObj = companyAgendas[cid].slots[matchingSlot];
+            
+            if (slotObj.mode === 'free') {
+              slotObj.mode = reqFormat === 'One-to-Few' ? 'One-to-Few' : 'One-to-One';
+            }
+
+            slotObj.participants.push(pName);
+            investorAgendas[reg.id].schedule[matchingSlot] = {
+              companyName: comp.name,
+              format: slotObj.mode
+            };
           }
         });
       });
@@ -357,7 +397,7 @@ export const AdminDashboard = () => {
             { id: 'registrations', label: `Inscriptions & Demandes (${registrations.length})`, icon: Users },
             { id: 'companies', label: `Gestion des Sociétés (${companies.length})`, icon: Building2 },
             { id: 'event', label: 'Infos, Google Sheets & Webhook', icon: Calendar },
-            { id: 'agenda', label: 'Générateur d\'Agendas (Évolution 22)', icon: Sparkles }
+            { id: 'agenda', label: 'Générateur d\'Agendas (Matching Engine)', icon: Sparkles }
           ].map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -455,7 +495,7 @@ export const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Interactive Table with Checkboxes & Delete button */}
+            {/* Interactive Table */}
             <div className="bg-slate-850 rounded-xl border border-slate-800 overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
                 <thead className="bg-slate-800 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-700">
@@ -492,7 +532,6 @@ export const AdminDashboard = () => {
                           isSelected ? 'bg-blue-950/40 font-medium' : 'hover:bg-slate-800/50'
                         }`}
                       >
-                        {/* Checkbox Column */}
                         <td className="p-3.5 text-center" onClick={() => toggleSelectReg(reg.id)}>
                           <input
                             type="checkbox"
@@ -568,7 +607,6 @@ export const AdminDashboard = () => {
         {/* TAB 2: COMPANIES MANAGEMENT */}
         {activeTab === 'companies' && (
           <div className="space-y-6">
-            
             <div className="flex items-center justify-between">
               <p className="text-xs text-slate-400">
                 Activez ou désactivez une société, ou modifiez ses contraintes spécifiques de disponibilité (ex: Sword).
@@ -644,15 +682,12 @@ export const AdminDashboard = () => {
                 );
               })}
             </div>
-
           </div>
         )}
 
         {/* TAB 3: EVENT & GOOGLE SHEETS WEBHOOK */}
         {activeTab === 'event' && (
           <div className="space-y-6">
-            
-            {/* Google Sheets Live Webhook Integration Section */}
             <div className="bg-emerald-950/40 p-6 rounded-2xl border border-emerald-800 space-y-4">
               <div className="flex items-center space-x-3">
                 <div className="p-3 bg-emerald-600 text-white rounded-xl">
@@ -681,7 +716,6 @@ export const AdminDashboard = () => {
                 />
               </div>
 
-              {/* Apps script helper code */}
               <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-slate-300">
@@ -705,7 +739,6 @@ export const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Event Settings Form */}
             <div className="bg-slate-850 p-6 rounded-xl border border-slate-700 space-y-4">
               <h3 className="text-base font-bold text-white font-display">Paramètres Généraux de l'Événement</h3>
               
@@ -751,43 +784,10 @@ export const AdminDashboard = () => {
                 </div>
               </div>
             </div>
-
-            {/* Program Items Form */}
-            <div className="bg-slate-850 p-6 rounded-xl border border-slate-700 space-y-4">
-              <h3 className="text-base font-bold text-white font-display">Édition des Horaires du Programme</h3>
-
-              <div className="space-y-3">
-                {program.map((item) => (
-                  <div key={item.id} className="p-3 bg-slate-800 rounded-lg border border-slate-700 grid grid-cols-1 sm:grid-cols-4 gap-3 items-center">
-                    <input
-                      type="text"
-                      value={item.time}
-                      onChange={(e) => updateProgramItem(item.id, { time: e.target.value })}
-                      className="p-2 bg-slate-900 border border-slate-700 rounded text-xs text-blue-300 font-bold"
-                    />
-
-                    <input
-                      type="text"
-                      value={item.title}
-                      onChange={(e) => updateProgramItem(item.id, { title: e.target.value })}
-                      className="p-2 bg-slate-900 border border-slate-700 rounded text-xs text-white font-semibold"
-                    />
-
-                    <input
-                      type="text"
-                      value={item.description}
-                      onChange={(e) => updateProgramItem(item.id, { description: e.target.value })}
-                      className="p-2 bg-slate-900 border border-slate-700 rounded text-xs text-slate-300 sm:col-span-2"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
           </div>
         )}
 
-        {/* TAB 4: AUTOMATED AGENDA GENERATOR (ÉVOLUTION 22) */}
+        {/* TAB 4: AUTOMATED AGENDA GENERATOR (Strict One-to-One Solo vs One-to-Few Group Logic) */}
         {activeTab === 'agenda' && (
           <div className="space-y-6">
             
@@ -799,7 +799,7 @@ export const AdminDashboard = () => {
                 <div>
                   <h3 className="text-lg font-bold text-white font-display">Générateur Automatique d'Agendas (Matching Engine)</h3>
                   <p className="text-xs text-slate-300 mt-0.5">
-                    Croise automatiquement les créneaux investisseurs, les priorités des demandes et les contraintes spécifiques des sociétés (ex: Sword 10-12h et 15-16h).
+                    Gère les créneaux <strong>One-to-One (Exclusif Solo)</strong> et <strong>One-to-Few (Groupes partagés sans conflit)</strong> en croisant les priorités et contraintes des entreprises (ex: Sword 10-12h et 15-16h).
                   </p>
                 </div>
               </div>
@@ -828,15 +828,30 @@ export const AdminDashboard = () => {
                     {Object.entries(generatedAgenda.investorAgendas).map(([regId, data]) => (
                       <div key={regId} className="bg-slate-800 p-4 rounded-lg border border-slate-700 space-y-2">
                         <div className="font-bold text-white text-xs">{data.participant}</div>
-                        <div className="grid grid-cols-2 gap-2 text-[11px]">
-                          {TIME_SLOTS.map(slot => (
-                            <div key={slot} className={`p-1.5 rounded border ${
-                              data.schedule[slot] ? 'bg-blue-900/60 border-blue-600 text-white font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-500'
-                            }`}>
-                              <span>{slot} : </span>
-                              <span className="text-blue-200">{data.schedule[slot] || 'Libre'}</span>
-                            </div>
-                          ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                          {TIME_SLOTS.map(slot => {
+                            const entry = data.schedule[slot];
+                            return (
+                              <div key={slot} className={`p-2 rounded border flex items-center justify-between ${
+                                entry
+                                  ? entry.format === 'One-to-One'
+                                    ? 'bg-blue-900/80 border-blue-500 text-white font-bold'
+                                    : 'bg-indigo-900/80 border-indigo-500 text-indigo-100 font-bold'
+                                  : 'bg-slate-900/40 border-slate-800 text-slate-500'
+                              }`}>
+                                <span>{slot} :</span>
+                                {entry ? (
+                                  <span className="flex items-center space-x-1">
+                                    {entry.format === 'One-to-One' ? <UserCheck className="w-3 h-3 text-blue-300" /> : <Users2 className="w-3 h-3 text-indigo-300" />}
+                                    <span className="text-white font-bold">{entry.companyName}</span>
+                                    <span className="text-[9px] opacity-80">({entry.format})</span>
+                                  </span>
+                                ) : (
+                                  <span className="text-slate-500">Libre</span>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
@@ -861,15 +876,41 @@ export const AdminDashboard = () => {
                           )}
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 text-[11px]">
-                          {TIME_SLOTS.map(slot => (
-                            <div key={slot} className={`p-1.5 rounded border ${
-                              slots[slot] ? 'bg-emerald-950/70 border-emerald-700 text-emerald-200 font-bold' : 'bg-slate-900/40 border-slate-800 text-slate-500'
-                            }`}>
-                              <span>{slot} : </span>
-                              <span>{slots[slot] || 'Disponible'}</span>
-                            </div>
-                          ))}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                          {TIME_SLOTS.map(slot => {
+                            const slotState = slots[slot];
+                            const isBusy = slotState.participants.length > 0;
+
+                            return (
+                              <div key={slot} className={`p-2 rounded border space-y-1 ${
+                                isBusy
+                                  ? slotState.mode === 'One-to-One'
+                                    ? 'bg-emerald-950 border-emerald-600 text-emerald-200'
+                                    : 'bg-indigo-950 border-indigo-600 text-indigo-200'
+                                  : 'bg-slate-900/40 border-slate-800 text-slate-500'
+                              }`}>
+                                <div className="flex items-center justify-between">
+                                  <span className="font-bold">{slot} :</span>
+                                  {isBusy && (
+                                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.2 rounded ${
+                                      slotState.mode === 'One-to-One' ? 'bg-emerald-800 text-white' : 'bg-indigo-800 text-white'
+                                    }`}>
+                                      {slotState.mode === 'One-to-One' ? 'Solo (1-to-1)' : `Groupe (${slotState.participants.length})`}
+                                    </span>
+                                  )}
+                                </div>
+                                {isBusy ? (
+                                  <div className="text-[10px] space-y-0.5 text-white font-medium">
+                                    {slotState.participants.map((p, pIdx) => (
+                                      <div key={pIdx} className="truncate">• {p}</div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <span className="text-slate-500">Disponible</span>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
                     ))}
