@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { Lock, Key, X, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Lock, Key, X, ArrowRight, AlertCircle } from 'lucide-react';
 
 export const AdminPasswordModal = () => {
   const { passwordModalOpen, setPasswordModalOpen, loginAdmin } = useApp();
@@ -41,17 +41,14 @@ export const AdminPasswordModal = () => {
             <Lock className="w-6 h-6 text-white" />
           </div>
 
-          <h3 className="text-xl font-bold font-display">Accès Administrateur EuroLand</h3>
-          <p className="text-xs text-blue-200 mt-1">
-            Cet espace est exclusivement réservé aux membres autorisés d'EuroLand Corporate.
-          </p>
+          <h3 className="text-xl font-bold font-display">Accès Administrateur</h3>
         </div>
 
-        {/* Form Body */}
+        {/* Form Body - Ultra clean, nothing underneath */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
-              Mot de passe d'administration
+              Mot de passe
             </label>
             <div className="relative">
               <Key className="w-5 h-5 text-slate-400 absolute left-3.5 top-3.5" />
@@ -64,7 +61,7 @@ export const AdminPasswordModal = () => {
                   setEnteredPass(e.target.value);
                   setErrorMsg(false);
                 }}
-                placeholder="Entrez votre mot de passe..."
+                placeholder="Mot de passe..."
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none"
               />
             </div>
