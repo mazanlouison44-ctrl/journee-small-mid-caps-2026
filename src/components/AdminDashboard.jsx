@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { TIME_SLOTS } from '../data/companies';
 import {
   Shield, Building2, Users, Calendar, Download, Plus, Edit, Eye, EyeOff,
-  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders
+  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders, Link, Copy
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -22,26 +22,17 @@ export const AdminDashboard = () => {
     resetDataToDefault
   } = useApp();
 
-  const [activeTab, setActiveTab] = useState('registrations'); // 'registrations' | 'companies' | 'event' | 'agenda'
+  const [activeTab, setActiveTab] = useState('registrations');
   const [editingCompany, setEditingCompany] = useState(null);
   const [newCompanyModal, setNewCompanyModal] = useState(false);
-  const [newCompData, setNewCompData] = useState({
-    name: '',
-    ticker: '',
-    sector: 'Tech & Services IT',
-    description: '',
-    availabilityConstraintText: ''
-  });
+  const [copiedScript, setCopiedScript] = useState(false);
 
   const [searchReg, setSearchReg] = useState('');
-
-  // Agenda Generation State (Section 22)
   const [generatedAgenda, setGeneratedAgenda] = useState(null);
   const [generating, setGenerating] = useState(false);
 
   if (!adminMode) return null;
 
-  // Filter registrations
   const filteredRegistrations = registrations.filter(
     (r) =>
       r.identity.lastName.toLowerCase().includes(searchReg.toLowerCase()) ||
@@ -127,7 +118,6 @@ export const AdminDashboard = () => {
       const investorAgendas = {};
       const companyAgendas = {};
 
-      // Initialize slot tables for active companies
       companies.filter(c => c.active).forEach(c => {
         companyAgendas[c.id] = {
           company: c,
@@ -135,7 +125,6 @@ export const AdminDashboard = () => {
         };
       });
 
-      // Simple greedy matching algorithm prioritizing 'Prioritaire' then 'Souhaitée'
       registrations.forEach(reg => {
         const pName = `${reg.identity.firstName} ${reg.identity.lastName} (${reg.identity.company})`;
         investorAgendas[reg.id] = {
@@ -145,7 +134,6 @@ export const AdminDashboard = () => {
 
         const userSlots = reg.availability.fullDay ? TIME_SLOTS : reg.availability.slots;
 
-        // Sort requests by priority
         const sortedRequests = [...reg.selectedCompanies].sort((a, b) => {
           const prefA = reg.companyPreferences[a]?.priority === 'Prioritaire' ? 2 : 1;
           const prefB = reg.companyPreferences[b]?.priority === 'Prioritaire' ? 2 : 1;
@@ -156,10 +144,8 @@ export const AdminDashboard = () => {
           const comp = companyMap.get(cid);
           if (!comp || !comp.active) return;
 
-          // Allowed slots for company
           const allowedSlots = comp.availabilityConstraint?.allowedSlots || TIME_SLOTS;
 
-          // Find first available slot where both investor and company are free
           const matchingSlot = userSlots.find(slot => {
             const isCompanyAllowed = allowedSlots.includes(slot);
             const isCompanyFree = !companyAgendas[cid].slots[slot];
@@ -178,6 +164,30 @@ export const AdminDashboard = () => {
       setGenerating(false);
     }, 600);
   };
+
+  const googleAppsScriptCode = `function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var pSheet = ss.getSheetByName("PARTICIPANTS") || ss.insertSheet("PARTICIPANTS");
+  var rSheet = ss.getSheetByName("DEMANDES_RDV") || ss.insertSheet("DEMANDES_RDV");
+  
+  if (pSheet.getLastRow() === 0) {
+    pSheet.appendRow(["ID", "Date", "Civilité", "Prénom", "Nom", "Email", "Téléphone", "Société", "Fonction", "Type", "Disponibilités", "Sociétés Demandées"]);
+  }
+  if (rSheet.getLastRow() === 0) {
+    rSheet.appendRow(["ID Participant", "Nom Participant", "Société Participant", "Société Demandée", "Format", "Actionnaire", "Connaissance", "Priorité"]);
+  }
+  
+  var p = data.identity;
+  pSheet.appendRow([data.id, data.createdAt, p.civility, p.firstName, p.lastName, p.email, p.phone, p.company, p.jobTitle, p.investorType, data.availability.fullDay ? "Toute la journée" : data.availability.slots.join("; "), data.selectedCompanies.length]);
+  
+  data.selectedCompanies.forEach(function(cid) {
+    var pref = data.companyPreferences[cid] || {};
+    rSheet.appendRow([data.id, p.firstName + " " + p.lastName, p.company, cid, pref.format || "One-to-One", pref.isShareholder || "Non", pref.knowledgeLevel || 3, pref.priority || "Souhaitée"]);
+  });
+  
+  return ContentService.createTextOutput("SUCCESS");
+}`;
 
   return (
     <div className="bg-slate-900 text-slate-100 border-b border-slate-800 py-10 px-4 sm:px-6 lg:px-8">
@@ -225,7 +235,7 @@ export const AdminDashboard = () => {
           {[
             { id: 'registrations', label: `Inscriptions & Demandes (${registrations.length})`, icon: Users },
             { id: 'companies', label: `Gestion des Sociétés (${companies.length})`, icon: Building2 },
-            { id: 'event', label: 'Infos & Programme', icon: Calendar },
+            { id: 'event', label: 'Infos, Google Sheets & Webhook', icon: Calendar },
             { id: 'agenda', label: 'Générateur d\'Agendas (Évolution 22)', icon: Sparkles }
           ].map((tab) => {
             const Icon = tab.icon;
@@ -389,7 +399,6 @@ export const AdminDashboard = () => {
                         <span className="text-xs text-blue-400">{comp.sector}</span>
                       </div>
 
-                      {/* Active/Inactive Toggle Button */}
                       <button
                         onClick={() => toggleCompanyActive(comp.id)}
                         className={`px-3 py-1 rounded-md text-[11px] font-bold transition-all flex items-center space-x-1 ${
@@ -405,7 +414,6 @@ export const AdminDashboard = () => {
 
                     <p className="text-xs text-slate-400 line-clamp-2">{comp.description}</p>
 
-                    {/* Constraint editor */}
                     <div className="pt-2 border-t border-slate-800">
                       <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1">
                         Contrainte de disponibilité particulière
@@ -433,10 +441,63 @@ export const AdminDashboard = () => {
           </div>
         )}
 
-        {/* TAB 3: EVENT & PROGRAM */}
+        {/* TAB 3: EVENT & GOOGLE SHEETS WEBHOOK */}
         {activeTab === 'event' && (
           <div className="space-y-6">
             
+            {/* Google Sheets Live Webhook Integration Section */}
+            <div className="bg-emerald-950/40 p-6 rounded-2xl border border-emerald-800 space-y-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-emerald-600 text-white rounded-xl">
+                  <FileSpreadsheet className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white font-display">
+                    Connexion Google Sheets en Temps Réel (Webhook)
+                  </h3>
+                  <p className="text-xs text-emerald-200 mt-0.5">
+                    Entrez l'URL Webhook de votre Google Sheet ou Zapier/Make pour recevoir automatiquement chaque inscription en temps réel !
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-emerald-300 uppercase mb-1">
+                  URL Webhook Google Sheets / Make / Zapier :
+                </label>
+                <input
+                  type="url"
+                  value={eventInfo.webhookUrl || ''}
+                  onChange={(e) => updateEventInfo({ webhookUrl: e.target.value })}
+                  placeholder="https://script.google.com/macros/s/.../exec"
+                  className="w-full p-3 bg-slate-900 border border-emerald-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono"
+                />
+              </div>
+
+              {/* Apps script helper code */}
+              <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300">
+                    Script Google Apps Script (Copier-Coller dans Google Sheets Extensions → Apps Script) :
+                  </span>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(googleAppsScriptCode);
+                      setCopiedScript(true);
+                      setTimeout(() => setCopiedScript(false), 2000);
+                    }}
+                    className="px-3 py-1 bg-emerald-800 hover:bg-emerald-700 text-white rounded text-xs font-bold flex items-center space-x-1"
+                  >
+                    <Copy className="w-3 h-3" />
+                    <span>{copiedScript ? 'Copié !' : 'Copier le script'}</span>
+                  </button>
+                </div>
+                <pre className="text-[11px] font-mono text-emerald-300 bg-slate-950 p-3 rounded overflow-x-auto max-h-40">
+                  {googleAppsScriptCode}
+                </pre>
+              </div>
+            </div>
+
             {/* Event Settings Form */}
             <div className="bg-slate-850 p-6 rounded-xl border border-slate-700 space-y-4">
               <h3 className="text-base font-bold text-white font-display">Paramètres Généraux de l'Événement</h3>

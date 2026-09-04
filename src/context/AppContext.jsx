@@ -11,7 +11,6 @@ const STORAGE_KEYS = {
   REGISTRATIONS: 'jsmc_registrations_v1'
 };
 
-// Initial mock registration so admin view has demo data immediately
 const INITIAL_DEMO_REGISTRATIONS = [
   {
     id: 'REG-1001',
@@ -43,7 +42,6 @@ const INITIAL_DEMO_REGISTRATIONS = [
 ];
 
 export const AppProvider = ({ children }) => {
-  // Load initial states from LocalStorage or defaults
   const [companies, setCompanies] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.COMPANIES);
     return saved ? JSON.parse(saved) : INITIAL_COMPANIES;
@@ -115,11 +113,25 @@ export const AppProvider = ({ children }) => {
       id: `REG-${Date.now().toString().slice(-4)}`,
       createdAt: new Date().toISOString()
     };
+
     setRegistrations((prev) => [registrationWithId, ...prev]);
     setLastSubmittedRegistration(registrationWithId);
     setWizardOpen(false);
     setConfirmationModalOpen(true);
     setSelectedCompanyIds([]);
+
+    // Real-time sending to Google Sheets / Webhook URL if configured
+    if (eventInfo.webhookUrl && eventInfo.webhookUrl.trim() !== '') {
+      try {
+        fetch(eventInfo.webhookUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(registrationWithId)
+        }).catch((err) => console.log('Webhook send notice:', err));
+      } catch (e) {
+        console.log('Webhook error:', e);
+      }
+    }
   };
 
   // Admin Actions
