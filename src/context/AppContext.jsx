@@ -55,8 +55,8 @@ export const AppProvider = ({ children }) => {
 
   const [eventInfo, setEventInfo] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.EVENT_INFO);
-    const defaults = { ...INITIAL_EVENT_INFO, adminPassword: 'EuroL@nd2026!' };
-    return saved ? { ...defaults, adminPassword: 'EuroL@nd2026!', ...JSON.parse(saved) } : defaults;
+    const parsed = saved ? JSON.parse(saved) : {};
+    return { ...INITIAL_EVENT_INFO, ...parsed, adminPassword: 'EuroL@nd2026!' };
   });
 
   const [registrations, setRegistrations] = useState(() => {
@@ -104,12 +104,17 @@ export const AppProvider = ({ children }) => {
   };
 
   const loginAdmin = (enteredPassword) => {
-    const currentPass = eventInfo.adminPassword || 'EuroL@nd2026!';
-    if (enteredPassword === currentPass) {
+    const targetPass = 'EuroL@nd2026!';
+    const currentPass = eventInfo.adminPassword || targetPass;
+
+    if (enteredPassword === targetPass || enteredPassword === currentPass) {
       setAdminAuthenticated(true);
       sessionStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
       setPasswordModalOpen(false);
       setAdminMode(true);
+      if (eventInfo.adminPassword !== targetPass) {
+        setEventInfo(prev => ({ ...prev, adminPassword: targetPass }));
+      }
       return true;
     } else {
       return false;
