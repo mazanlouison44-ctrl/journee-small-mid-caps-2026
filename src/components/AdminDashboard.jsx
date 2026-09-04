@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { TIME_SLOTS } from '../data/companies';
 import {
   Shield, Building2, Users, Calendar, Download, Plus, Edit, Eye, EyeOff,
-  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders, Link, Copy, CheckSquare, Square
+  CheckCircle, Clock, Sparkles, RefreshCw, Trash2, FileSpreadsheet, X, Search, Sliders, Link, Copy, CheckSquare, Square, AlertTriangle
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
@@ -19,6 +19,8 @@ export const AdminDashboard = () => {
     eventInfo,
     updateEventInfo,
     registrations,
+    deleteRegistration,
+    deleteMultipleRegistrations,
     resetDataToDefault
   } = useApp();
 
@@ -29,6 +31,12 @@ export const AdminDashboard = () => {
 
   const [searchReg, setSearchReg] = useState('');
   const [selectedRegIds, setSelectedRegIds] = useState([]);
+
+  // Deletion Confirmation Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTargets, setDeleteTargets] = useState([]); // array of IDs to delete
+  const [deleteTargetLabel, setDeleteTargetLabel] = useState('');
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const [generatedAgenda, setGeneratedAgenda] = useState(null);
   const [generating, setGenerating] = useState(false);
@@ -55,6 +63,42 @@ export const AdminDashboard = () => {
     } else {
       setSelectedRegIds(filteredRegistrations.map((r) => r.id));
     }
+  };
+
+  // Open Delete Confirmation Modal for Single Registration
+  const triggerDeleteSingle = (reg) => {
+    setDeleteTargets([reg.id]);
+    setDeleteTargetLabel(`la demande de ${reg.identity.civility} ${reg.identity.firstName} ${reg.identity.lastName} (${reg.identity.company})`);
+    setDeleteConfirmText('');
+    setDeleteModalOpen(true);
+  };
+
+  // Open Delete Confirmation Modal for Selected Registrations
+  const triggerDeleteSelected = () => {
+    if (selectedRegIds.length === 0) return;
+    setDeleteTargets(selectedRegIds);
+    setDeleteTargetLabel(`les ${selectedRegIds.length} demandes sélectionnées`);
+    setDeleteConfirmText('');
+    setDeleteModalOpen(true);
+  };
+
+  // Execute Confirmed Deletion
+  const handleConfirmDelete = () => {
+    if (deleteConfirmText.trim() !== 'Supprimer') {
+      alert('Veuillez écrire "Supprimer" pour confirmer la suppression.');
+      return;
+    }
+
+    if (deleteTargets.length === 1) {
+      deleteRegistration(deleteTargets[0]);
+    } else if (deleteTargets.length > 1) {
+      deleteMultipleRegistrations(deleteTargets);
+      setSelectedRegIds([]);
+    }
+
+    setDeleteModalOpen(false);
+    setDeleteConfirmText('');
+    setDeleteTargets([]);
   };
 
   // CSV Export for Participants (All or Selected)
@@ -335,7 +379,7 @@ export const AdminDashboard = () => {
           })}
         </div>
 
-        {/* TAB 1: REGISTRATIONS WITH CHECKBOX SELECTION & TARGETED EXPORTS */}
+        {/* TAB 1: REGISTRATIONS WITH CHECKBOX SELECTION & DELETION */}
         {activeTab === 'registrations' && (
           <div className="space-y-6">
             
@@ -369,7 +413,7 @@ export const AdminDashboard = () => {
                 )}
               </div>
 
-              {/* Download Actions */}
+              {/* Download & Delete Actions */}
               <div className="flex flex-wrap gap-2 w-full md:w-auto">
                 <button
                   onClick={() => exportParticipantsCSV(selectedRegIds.length > 0)}
@@ -401,17 +445,17 @@ export const AdminDashboard = () => {
 
                 {selectedRegIds.length > 0 && (
                   <button
-                    onClick={exportSelectedDetailsText}
-                    className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white rounded-lg text-xs font-bold transition-colors flex items-center space-x-1.5"
+                    onClick={triggerDeleteSelected}
+                    className="px-3.5 py-2 bg-rose-700 hover:bg-rose-600 text-white rounded-lg text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-md"
                   >
-                    <Download className="w-4 h-4 text-blue-400" />
-                    <span>Télécharger Fiche Synthèse (.TXT)</span>
+                    <Trash2 className="w-4 h-4" />
+                    <span>Supprimer la sélection ({selectedRegIds.length})</span>
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Interactive Table with Checkboxes */}
+            {/* Interactive Table with Checkboxes & Delete button */}
             <div className="bg-slate-850 rounded-xl border border-slate-800 overflow-x-auto">
               <table className="w-full text-left text-xs text-slate-300">
                 <thead className="bg-slate-800 text-slate-400 uppercase font-bold text-[10px] tracking-wider border-b border-slate-700">
@@ -434,7 +478,7 @@ export const AdminDashboard = () => {
                     <th className="p-3.5">Société / Fonction</th>
                     <th className="p-3.5">Disponibilités</th>
                     <th className="p-3.5">Sociétés Demandées</th>
-                    <th className="p-3.5">Action</th>
+                    <th className="p-3.5 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800">
@@ -489,7 +533,7 @@ export const AdminDashboard = () => {
                           </span>
                         </td>
 
-                        <td className="p-3.5">
+                        <td className="p-3.5 text-right space-x-2">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -498,6 +542,17 @@ export const AdminDashboard = () => {
                             className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold rounded border border-slate-700"
                           >
                             Détails
+                          </button>
+
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              triggerDeleteSingle(reg);
+                            }}
+                            className="px-2.5 py-1 bg-rose-950/80 hover:bg-rose-900 text-rose-300 text-[11px] font-bold rounded border border-rose-800 transition-colors"
+                            title="Supprimer cette demande"
+                          >
+                            Supprimer
                           </button>
                         </td>
                       </tr>
@@ -828,6 +883,70 @@ export const AdminDashboard = () => {
         )}
 
       </div>
+
+      {/* STRICT DELETION CONFIRMATION MODAL Requiring typing "Supprimer" */}
+      {deleteModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
+          <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl text-slate-100">
+            
+            <div className="flex items-center space-x-3 text-rose-500">
+              <div className="p-3 bg-rose-950/80 border border-rose-800 rounded-xl">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white font-display">Confirmation de suppression</h3>
+                <p className="text-xs text-rose-300 font-semibold">Action irréversible</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Êtes-vous sûr de vouloir supprimer <strong className="text-white">{deleteTargetLabel}</strong> ? Les données associées seront retirées définitivement.
+            </p>
+
+            <div className="space-y-2 bg-slate-950 p-4 rounded-xl border border-slate-800">
+              <label className="block text-xs font-bold text-slate-300">
+                Pour confirmer, veuillez saisir le mot <span className="text-rose-400 uppercase font-mono tracking-wider font-extrabold font-mono">Supprimer</span> ci-dessous :
+              </label>
+              <input
+                type="text"
+                autoFocus
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value)}
+                placeholder="Tapez Supprimer..."
+                className="w-full p-3 bg-slate-900 border border-slate-700 rounded-lg text-sm text-white focus:outline-none focus:border-rose-500 font-semibold"
+              />
+            </div>
+
+            <div className="flex items-center justify-end space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setDeleteModalOpen(false);
+                  setDeleteConfirmText('');
+                }}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl border border-slate-700"
+              >
+                Annuler
+              </button>
+
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={deleteConfirmText.trim() !== 'Supprimer'}
+                className={`px-5 py-2.5 rounded-xl text-xs font-extrabold transition-all shadow ${
+                  deleteConfirmText.trim() === 'Supprimer'
+                    ? 'bg-rose-600 hover:bg-rose-500 text-white cursor-pointer shadow-rose-900/50'
+                    : 'bg-slate-800 text-slate-500 cursor-not-allowed border border-slate-700'
+                }`}
+              >
+                SUPPRIMER DÉFINITIVEMENT
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

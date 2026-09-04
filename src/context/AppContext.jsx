@@ -127,6 +127,15 @@ export const AppProvider = ({ children }) => {
     sessionStorage.removeItem(STORAGE_KEYS.ADMIN_AUTH);
   };
 
+  // Registration deletion helpers
+  const deleteRegistration = (id) => {
+    setRegistrations((prev) => prev.filter((r) => r.id !== id));
+  };
+
+  const deleteMultipleRegistrations = (ids) => {
+    setRegistrations((prev) => prev.filter((r) => !ids.includes(r.id)));
+  };
+
   // Company selection helper
   const toggleSelectCompany = (id) => {
     setSelectedCompanyIds((prev) =>
@@ -231,6 +240,8 @@ export const AppProvider = ({ children }) => {
         setConfirmationModalOpen,
         lastSubmittedRegistration,
         submitRegistration,
+        deleteRegistration,
+        deleteMultipleRegistrations,
         adminMode,
         setAdminMode,
         adminAuthenticated,
