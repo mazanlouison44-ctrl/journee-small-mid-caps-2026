@@ -55,8 +55,8 @@ export const AppProvider = ({ children }) => {
 
   const [eventInfo, setEventInfo] = useState(() => {
     const saved = localStorage.getItem(STORAGE_KEYS.EVENT_INFO);
-    const defaults = { ...INITIAL_EVENT_INFO, adminPassword: 'EuroLand2026' };
-    return saved ? { ...defaults, ...JSON.parse(saved) } : defaults;
+    const defaults = { ...INITIAL_EVENT_INFO, adminPassword: 'EuroL@nd2026!' };
+    return saved ? { ...defaults, adminPassword: 'EuroL@nd2026!', ...JSON.parse(saved) } : defaults;
   });
 
   const [registrations, setRegistrations] = useState(() => {
@@ -104,7 +104,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const loginAdmin = (enteredPassword) => {
-    const currentPass = eventInfo.adminPassword || 'EuroLand2026';
+    const currentPass = eventInfo.adminPassword || 'EuroL@nd2026!';
     if (enteredPassword === currentPass) {
       setAdminAuthenticated(true);
       sessionStorage.setItem(STORAGE_KEYS.ADMIN_AUTH, 'true');
@@ -198,7 +198,7 @@ export const AppProvider = ({ children }) => {
   const resetDataToDefault = () => {
     setCompanies(INITIAL_COMPANIES);
     setProgram(INITIAL_PROGRAM);
-    setEventInfo(INITIAL_EVENT_INFO);
+    setEventInfo({ ...INITIAL_EVENT_INFO, adminPassword: 'EuroL@nd2026!' });
     setRegistrations(INITIAL_DEMO_REGISTRATIONS);
     localStorage.removeItem(STORAGE_KEYS.COMPANIES);
     localStorage.removeItem(STORAGE_KEYS.PROGRAM);

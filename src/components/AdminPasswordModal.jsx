@@ -43,7 +43,7 @@ export const AdminPasswordModal = () => {
 
           <h3 className="text-xl font-bold font-display">Accès Administrateur EuroLand</h3>
           <p className="text-xs text-blue-200 mt-1">
-            Cet espace est réservé aux membres de l'organisation. Veuillez saisir le mot de passe d'accès.
+            Cet espace est exclusivement réservé aux membres autorisés d'EuroLand Corporate.
           </p>
         </div>
 
@@ -64,19 +64,16 @@ export const AdminPasswordModal = () => {
                   setEnteredPass(e.target.value);
                   setErrorMsg(false);
                 }}
-                placeholder="Entrez le mot de passe..."
+                placeholder="Entrez votre mot de passe..."
                 className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-blue-600 focus:outline-none"
               />
             </div>
             {errorMsg && (
               <p className="text-xs text-rose-600 font-bold mt-1.5 flex items-center gap-1">
                 <AlertCircle className="w-3.5 h-3.5" />
-                Mot de passe incorrect. Réessayez.
+                Mot de passe incorrect.
               </p>
             )}
-            <p className="text-[11px] text-slate-400 mt-2">
-              (Mot de passe par défaut : <code className="bg-slate-100 text-slate-700 px-1 py-0.5 rounded font-mono">EuroLand2026</code>)
-            </p>
           </div>
 
           <div className="pt-2 flex items-center justify-end space-x-3">
