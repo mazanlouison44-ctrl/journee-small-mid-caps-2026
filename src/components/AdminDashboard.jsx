@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import * as XLSX from 'xlsx';
 import { useApp } from '../context/AppContext';
 import { TIME_SLOTS } from '../data/companies';
 import {
@@ -101,8 +102,8 @@ export const AdminDashboard = () => {
     setDeleteTargets([]);
   };
 
-  // CSV Export for Participants (All or Selected)
-  const exportParticipantsCSV = (onlySelected = false) => {
+  // Excel Native Export for Participants (.xlsx)
+  const exportParticipantsXLSX = (onlySelected = false) => {
     const listToExport = onlySelected
       ? registrations.filter((r) => selectedRegIds.includes(r.id))
       : registrations;
@@ -112,38 +113,59 @@ export const AdminDashboard = () => {
       return;
     }
 
-    const headers = [
-      'ID', 'Date Inscription', 'Civilité', 'Prénom', 'Nom', 'Email', 'Téléphone', 'Société', 'Fonction', 'Type Investisseur', 'Disponibilités', 'Remarques', 'Nombre Sociétés Demandées'
+    const companyMap = new Map(companies.map(c => [c.id, c.name]));
+
+    const data = listToExport.map((r) => {
+      const companyNames = r.selectedCompanies.map(cid => companyMap.get(cid) || cid).join(', ');
+      return {
+        'ID Inscription': r.id,
+        'Date Inscription': new Date(r.createdAt).toLocaleString('fr-FR'),
+        'Civilité': r.identity.civility || '',
+        'Prénom': r.identity.firstName || '',
+        'Nom': r.identity.lastName || '',
+        'Email Professionnel': r.identity.email || '',
+        'Téléphone': r.identity.phone || '',
+        'Société / Organisme': r.identity.company || '',
+        'Fonction': r.identity.jobTitle || '',
+        'Type Investisseur': r.identity.investorType || '',
+        'Disponibilités': r.availability.fullDay ? 'Toute la journée (9h-18h)' : r.availability.slots.join('; '),
+        'Remarques & Commentaires': r.availability.notes || 'Aucune remarque',
+        'Nb Sociétés Demandées': r.selectedCompanies.length,
+        'Liste des Sociétés Demandées': companyNames
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+
+    // Auto column widths with wider spacing for notes and company list
+    worksheet['!cols'] = [
+      { wch: 18 }, // ID Inscription
+      { wch: 20 }, // Date Inscription
+      { wch: 10 }, // Civilité
+      { wch: 15 }, // Prénom
+      { wch: 15 }, // Nom
+      { wch: 28 }, // Email
+      { wch: 18 }, // Téléphone
+      { wch: 25 }, // Société
+      { wch: 22 }, // Fonction
+      { wch: 24 }, // Type Investisseur
+      { wch: 30 }, // Disponibilités
+      { wch: 50 }, // Remarques & Commentaires (WIDE & VISIBLE!)
+      { wch: 22 }, // Nb Sociétés Demandées
+      { wch: 50 }  // Liste des Sociétés
     ];
 
-    const rows = listToExport.map((r) => [
-      r.id,
-      r.createdAt,
-      r.identity.civility,
-      r.identity.firstName,
-      r.identity.lastName,
-      r.identity.email,
-      r.identity.phone,
-      r.identity.company,
-      r.identity.jobTitle,
-      r.identity.investorType,
-      r.availability.fullDay ? 'Toute la journée' : r.availability.slots.join('; '),
-      `"${r.availability.notes || ''}"`,
-      r.selectedCompanies.length
-    ]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Participants');
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `JSMC2026_Participants_${onlySelected ? 'Selection' : 'Tous'}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    XLSX.writeFile(
+      workbook,
+      `JSMC2026_PARTICIPANTS_${onlySelected ? 'Selection' : 'Tous'}_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   };
 
-  // CSV Export for Demandes de RDV (All or Selected)
-  const exportDemandesCSV = (onlySelected = false) => {
+  // Excel Native Export for Demandes de RDV (.xlsx)
+  const exportDemandesXLSX = (onlySelected = false) => {
     const listToExport = onlySelected
       ? registrations.filter((r) => selectedRegIds.includes(r.id))
       : registrations;
@@ -153,41 +175,60 @@ export const AdminDashboard = () => {
       return;
     }
 
-    const headers = ['ID Participant', 'Participant', 'Email', 'Société Participant', 'Société Demandée', 'Format', 'Actionnaire', 'Connaissance', 'Priorité', 'Disponibilités Participant'];
-    
     const companyMap = new Map(companies.map(c => [c.id, c.name]));
     const rows = [];
 
     listToExport.forEach((r) => {
       const pName = `${r.identity.firstName} ${r.identity.lastName}`;
       const avail = r.availability.fullDay ? 'Toute la journée (9h-18h)' : r.availability.slots.join(' / ');
+      const notes = r.availability.notes || 'Aucune remarque';
 
       r.selectedCompanies.forEach((cid) => {
         const compName = companyMap.get(cid) || cid;
         const pref = r.companyPreferences[cid] || {};
-        rows.push([
-          r.id,
-          `"${pName}"`,
-          r.identity.email,
-          `"${r.identity.company}"`,
-          `"${compName}"`,
-          pref.format || 'One-to-One',
-          pref.isShareholder || 'Non',
-          pref.knowledgeLevel || 3,
-          pref.priority || 'Souhaitée',
-          `"${avail}"`
-        ]);
+        rows.push({
+          'ID Participant': r.id,
+          'Nom Participant': pName,
+          'Email': r.identity.email,
+          'Téléphone': r.identity.phone,
+          'Société Participant': r.identity.company || '',
+          'Fonction Participant': r.identity.jobTitle || '',
+          'Société Cotée Demandée': compName,
+          'Format RDV Souhaité': pref.format || 'One-to-One',
+          'Actionnaire': pref.isShareholder || 'Non',
+          'Connaissance Entreprise (1 à 5)': pref.knowledgeLevel || 3,
+          'Niveau de Priorité': pref.priority || 'Souhaitée',
+          'Disponibilités Participant': avail,
+          'Remarques & Commentaires Participant': notes
+        });
       });
     });
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `JSMC2026_Demandes_RDV_${onlySelected ? 'Selection' : 'Toutes'}_${new Date().toISOString().slice(0, 10)}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+
+    worksheet['!cols'] = [
+      { wch: 18 }, // ID Participant
+      { wch: 22 }, // Nom Participant
+      { wch: 28 }, // Email
+      { wch: 18 }, // Téléphone
+      { wch: 25 }, // Société Participant
+      { wch: 22 }, // Fonction Participant
+      { wch: 25 }, // Société Cotée Demandée
+      { wch: 18 }, // Format RDV Souhaité
+      { wch: 14 }, // Actionnaire
+      { wch: 28 }, // Connaissance Entreprise
+      { wch: 18 }, // Niveau de Priorité
+      { wch: 30 }, // Disponibilités Participant
+      { wch: 50 }  // Remarques & Commentaires Participant (WIDE & VISIBLE!)
+    ];
+
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Demandes RDV');
+
+    XLSX.writeFile(
+      workbook,
+      `JSMC2026_DEMANDES_RDV_${onlySelected ? 'Selection' : 'Toutes'}_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   };
 
   // Export Selected Folders into detailed text summary files
@@ -210,7 +251,7 @@ export const AdminDashboard = () => {
       fullText += `Fonction : ${r.identity.jobTitle}\n`;
       fullText += `Email : ${r.identity.email} | Tél : ${r.identity.phone}\n`;
       fullText += `Disponibilités : ${r.availability.fullDay ? 'Toute la journée (9h-18h)' : r.availability.slots.join(' / ')}\n`;
-      if (r.availability.notes) fullText += `Remarques : ${r.availability.notes}\n`;
+      fullText += `Remarques & Contraintes : ${r.availability.notes || 'Aucune'}\n`;
       fullText += `\nSociétés demandées (${r.selectedCompanies.length}) :\n`;
 
       r.selectedCompanies.forEach(cid => {
@@ -239,8 +280,6 @@ export const AdminDashboard = () => {
       const investorAgendas = {};
       const companyAgendas = {};
 
-      // Initialize company slot status tables
-      // Each slot has { mode: 'free' | 'One-to-One' | 'One-to-Few', participants: [] }
       companies.filter(c => c.active).forEach(c => {
         companyAgendas[c.id] = {
           company: c,
@@ -254,7 +293,6 @@ export const AdminDashboard = () => {
         });
       });
 
-      // Sort registrations by creation time
       registrations.forEach(reg => {
         const pName = `${reg.identity.firstName} ${reg.identity.lastName} (${reg.identity.company})`;
         investorAgendas[reg.id] = {
@@ -264,7 +302,6 @@ export const AdminDashboard = () => {
 
         const userSlots = reg.availability.fullDay ? TIME_SLOTS : reg.availability.slots;
 
-        // Sort requests by priority (Prioritaire first)
         const sortedRequests = [...reg.selectedCompanies].sort((a, b) => {
           const prefA = reg.companyPreferences[a]?.priority === 'Prioritaire' ? 2 : 1;
           const prefB = reg.companyPreferences[b]?.priority === 'Prioritaire' ? 2 : 1;
@@ -279,7 +316,6 @@ export const AdminDashboard = () => {
           const reqFormat = pref.format || 'One-to-One';
           const allowedSlots = comp.availabilityConstraint?.allowedSlots || TIME_SLOTS;
 
-          // Find suitable slot obeying One-to-One exclusivity vs One-to-Few sharing
           const matchingSlot = userSlots.find(slot => {
             const isCompanyAllowed = allowedSlots.includes(slot);
             const isInvestorFree = !investorAgendas[reg.id].schedule[slot];
@@ -287,17 +323,14 @@ export const AdminDashboard = () => {
 
             const companySlotState = companyAgendas[cid].slots[slot];
 
-            // 1. If company slot is FREE -> match!
             if (companySlotState.mode === 'free') {
               return true;
             }
 
-            // 2. If company slot is One-to-One -> STRICTLY SOLO! No one else can join.
             if (companySlotState.mode === 'One-to-One') {
               return false;
             }
 
-            // 3. If company slot is One-to-Few -> Can share ONLY if requested format is One-to-Few or Indifférent
             if (companySlotState.mode === 'One-to-Few') {
               return reqFormat === 'One-to-Few' || reqFormat === 'Indifférent';
             }
@@ -333,18 +366,18 @@ export const AdminDashboard = () => {
   var rSheet = ss.getSheetByName("DEMANDES_RDV") || ss.insertSheet("DEMANDES_RDV");
   
   if (pSheet.getLastRow() === 0) {
-    pSheet.appendRow(["ID", "Date", "Civilité", "Prénom", "Nom", "Email", "Téléphone", "Société", "Fonction", "Type", "Disponibilités", "Sociétés Demandées"]);
+    pSheet.appendRow(["ID", "Date", "Civilité", "Prénom", "Nom", "Email", "Téléphone", "Société", "Fonction", "Type", "Disponibilités", "Remarques", "Sociétés Demandées"]);
   }
   if (rSheet.getLastRow() === 0) {
-    rSheet.appendRow(["ID Participant", "Nom Participant", "Société Participant", "Société Demandée", "Format", "Actionnaire", "Connaissance", "Priorité"]);
+    rSheet.appendRow(["ID Participant", "Nom Participant", "Société Participant", "Société Demandée", "Format", "Actionnaire", "Connaissance", "Priorité", "Remarques"]);
   }
   
   var p = data.identity;
-  pSheet.appendRow([data.id, data.createdAt, p.civility, p.firstName, p.lastName, p.email, p.phone, p.company, p.jobTitle, p.investorType, data.availability.fullDay ? "Toute la journée" : data.availability.slots.join("; "), data.selectedCompanies.length]);
+  pSheet.appendRow([data.id, data.createdAt, p.civility, p.firstName, p.lastName, p.email, p.phone, p.company, p.jobTitle, p.investorType, data.availability.fullDay ? "Toute la journée" : data.availability.slots.join("; "), data.availability.notes || "Aucune", data.selectedCompanies.length]);
   
   data.selectedCompanies.forEach(function(cid) {
     var pref = data.companyPreferences[cid] || {};
-    rSheet.appendRow([data.id, p.firstName + " " + p.lastName, p.company, cid, pref.format || "One-to-One", pref.isShareholder || "Non", pref.knowledgeLevel || 3, pref.priority || "Souhaitée"]);
+    rSheet.appendRow([data.id, p.firstName + " " + p.lastName, p.company, cid, pref.format || "One-to-One", pref.isShareholder || "Non", pref.knowledgeLevel || 3, pref.priority || "Souhaitée", data.availability.notes || "Aucune"]);
   });
   
   return ContentService.createTextOutput("SUCCESS");
@@ -456,30 +489,32 @@ export const AdminDashboard = () => {
               {/* Download & Delete Actions */}
               <div className="flex flex-wrap gap-2 w-full md:w-auto">
                 <button
-                  onClick={() => exportParticipantsCSV(selectedRegIds.length > 0)}
+                  onClick={() => exportParticipantsXLSX(selectedRegIds.length > 0)}
                   className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
                     selectedRegIds.length > 0
                       ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-md'
                       : 'bg-emerald-900/60 hover:bg-emerald-800 text-emerald-200'
                   }`}
+                  title="Télécharger directement en véritable fichier Excel (.xlsx) avec remarques"
                 >
                   <FileSpreadsheet className="w-4 h-4" />
                   <span>
-                    {selectedRegIds.length > 0 ? `Exporter les ${selectedRegIds.length} Participants` : 'Exporter Tous les Participants'}
+                    {selectedRegIds.length > 0 ? `Excel Participants (${selectedRegIds.length})` : 'Excel Tous les Participants'}
                   </span>
                 </button>
 
                 <button
-                  onClick={() => exportDemandesCSV(selectedRegIds.length > 0)}
+                  onClick={() => exportDemandesXLSX(selectedRegIds.length > 0)}
                   className={`px-3.5 py-2 rounded-lg text-xs font-bold transition-all flex items-center space-x-1.5 ${
                     selectedRegIds.length > 0
                       ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-md'
                       : 'bg-blue-900/60 hover:bg-blue-800 text-blue-200'
                   }`}
+                  title="Télécharger la matrice des demandes en véritable fichier Excel (.xlsx) avec remarques"
                 >
                   <Download className="w-4 h-4" />
                   <span>
-                    {selectedRegIds.length > 0 ? `Exporter ${selectedRegIds.length} Demandes (CSV)` : 'Exporter Toutes les Demandes'}
+                    {selectedRegIds.length > 0 ? `Excel Demandes (${selectedRegIds.length})` : 'Excel Toutes les Demandes'}
                   </span>
                 </button>
 
@@ -516,7 +551,7 @@ export const AdminDashboard = () => {
                     <th className="p-3.5">ID / Date</th>
                     <th className="p-3.5">Participant</th>
                     <th className="p-3.5">Société / Fonction</th>
-                    <th className="p-3.5">Disponibilités</th>
+                    <th className="p-3.5">Disponibilités & Remarques</th>
                     <th className="p-3.5">Sociétés Demandées</th>
                     <th className="p-3.5 text-right">Actions</th>
                   </tr>
@@ -561,9 +596,16 @@ export const AdminDashboard = () => {
                         </td>
 
                         <td className="p-3.5" onClick={() => toggleSelectReg(reg.id)}>
-                          <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 rounded font-semibold text-[11px]">
+                          <span className="px-2 py-0.5 bg-slate-800 border border-slate-700 text-slate-200 rounded font-semibold text-[11px] block w-fit mb-1">
                             {reg.availability.fullDay ? 'Toute la journée' : `${reg.availability.slots.length} créneau(x)`}
                           </span>
+                          {reg.availability.notes ? (
+                            <span className="text-[11px] text-amber-300 italic block font-medium">
+                              💬 "{reg.availability.notes}"
+                            </span>
+                          ) : (
+                            <span className="text-[10px] text-slate-500 block">Sans remarque</span>
+                          )}
                         </td>
 
                         <td className="p-3.5" onClick={() => toggleSelectReg(reg.id)}>
@@ -576,7 +618,9 @@ export const AdminDashboard = () => {
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              alert(`Détail des choix de ${reg.identity.firstName} ${reg.identity.lastName} :\n` + reg.selectedCompanies.map(c => `- ${c}`).join('\n'));
+                              alert(`Détail des choix de ${reg.identity.firstName} ${reg.identity.lastName} :\n` +
+                                `Remarques : ${reg.availability.notes || 'Aucune'}\n\n` +
+                                reg.selectedCompanies.map(c => `- ${c}`).join('\n'));
                             }}
                             className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold rounded border border-slate-700"
                           >
@@ -787,7 +831,7 @@ export const AdminDashboard = () => {
           </div>
         )}
 
-        {/* TAB 4: AUTOMATED AGENDA GENERATOR (Strict One-to-One Solo vs One-to-Few Group Logic) */}
+        {/* TAB 4: AUTOMATED AGENDA GENERATOR */}
         {activeTab === 'agenda' && (
           <div className="space-y-6">
             
@@ -925,7 +969,7 @@ export const AdminDashboard = () => {
 
       </div>
 
-      {/* STRICT DELETION CONFIRMATION MODAL Requiring typing "Supprimer" */}
+      {/* STRICT DELETION CONFIRMATION MODAL */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
           <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full p-6 space-y-5 shadow-2xl text-slate-100">
@@ -946,7 +990,7 @@ export const AdminDashboard = () => {
 
             <div className="space-y-2 bg-slate-950 p-4 rounded-xl border border-slate-800">
               <label className="block text-xs font-bold text-slate-300">
-                Pour confirmer, veuillez saisir le mot <span className="text-rose-400 uppercase font-mono tracking-wider font-extrabold font-mono">Supprimer</span> ci-dessous :
+                Pour confirmer, veuillez saisir le mot <span className="text-rose-400 uppercase font-mono tracking-wider font-extrabold">Supprimer</span> ci-dessous :
               </label>
               <input
                 type="text"
